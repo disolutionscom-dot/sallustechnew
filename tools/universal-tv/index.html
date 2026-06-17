@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0b0b0f"/>
+<link rel="manifest" id="pwaManifest"/>
+<title>Mymate TV</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+<script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mpegts.js@1.7.3/dist/mpegts.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+ --bg:#0b0b0f;--bg2:#141418;--card:#1b1b22;--card2:#26262e;
+ --red:#e50914;--red2:#ff2d3a;--gold:#f5c518;
+ --t1:#ffffff;--t2:#b3b3b3;--t3:#6d6d75;--bd:rgba(255,255,255,.08);
+ --tr:.2s ease;--safe-t:env(safe-area-inset-top,0px)
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overscroll-behavior:none}
+body{background:var(--bg);color:var(--t1);font-family:'Inter',system-ui,sans-serif;font-size:14px;overflow-x:hidden;min-height:100dvh;-webkit-tap-highlight-color:transparent}
+img{display:block;max-width:100%}button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit}
+input,select{font-family:inherit}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#333;border-radius:99px}
+.row-scroll::-webkit-scrollbar{height:0}
+/* ── NAV ── */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:18px;padding:14px 4vw;padding-top:calc(14px + var(--safe-t));transition:background .3s;background:linear-gradient(180deg,rgba(0,0,0,.85),transparent)}
+.nav.solid{background:var(--bg)}
+.logo{display:flex;align-items:center;gap:8px;font-size:22px;font-weight:900;letter-spacing:-.5px;color:var(--red);text-transform:uppercase;flex-shrink:0}
+.logo span{color:#fff}
+.nav-links{display:flex;gap:18px;flex-wrap:nowrap;overflow:hidden}
+.nav-link{font-size:13px;font-weight:600;color:var(--t2);transition:color var(--tr);white-space:nowrap}
+.nav-link:hover,.nav-link.on{color:#fff}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.nav-search{position:relative}
+.nav-search input{background:rgba(0,0,0,.6);border:1px solid var(--bd);border-radius:6px;padding:7px 12px 7px 32px;color:#fff;font-size:13px;width:170px;outline:none;transition:border-color var(--tr)}
+.nav-search input:focus{border-color:var(--red)}
+.nav-search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--t3)}
+.icon-btn{width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--t2);transition:all var(--tr)}
+.icon-btn:hover{color:#fff;background:rgba(255,255,255,.08)}
+.drive-dot{width:8px;height:8px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.drive-dot.ok{background:#22c55e;box-shadow:0 0 8px #22c55e}.drive-dot.bad{background:var(--red)}
+/* ── HERO ── */
+.hero{position:relative;height:62vh;min-height:420px;display:flex;flex-direction:column;justify-content:flex-end;padding:0 4vw 40px;overflow:hidden}
+.hero-bg{position:absolute;inset:0;z-index:0;background:#000}
+.hero-bg video,.hero-bg iframe{width:100%;height:100%;object-fit:cover;display:none;border:none}
+.hero-bg .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:120px;opacity:.06}
+.hero-fade{position:absolute;inset:0;z-index:1;background:linear-gradient(0deg,var(--bg) 2%,transparent 50%),linear-gradient(90deg,rgba(11,11,15,.9) 0,transparent 60%)}
+.hero-loading{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.spin{width:46px;height:46px;border:4px solid rgba(229,9,20,.2);border-top-color:var(--red);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hero-err{position:absolute;inset:0;z-index:2;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:24px;color:var(--t2)}
+.hero-content{position:relative;z-index:3;max-width:600px}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:4px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+.hero-title{font-size:clamp(26px,5vw,52px);font-weight:900;line-height:1.05;margin-bottom:10px;text-shadow:0 2px 20px rgba(0,0,0,.6)}
+.hero-meta{font-size:13px;color:var(--t2);margin-bottom:18px;display:flex;gap:12px;flex-wrap:wrap}
+.hero-meta b{color:var(--gold)}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:9px;padding:11px 24px;border-radius:6px;font-size:14px;font-weight:800;transition:all var(--tr)}
+.btn-play{background:#fff;color:#000}.btn-play:hover{background:rgba(255,255,255,.8)}
+.btn-ghost{background:rgba(109,109,117,.55);color:#fff}.btn-ghost:hover{background:rgba(109,109,117,.35)}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:var(--red2)}
+.hud{position:absolute;bottom:12px;right:4vw;z-index:3;display:flex;gap:14px;font-size:10px;color:var(--t3);font-family:monospace;flex-wrap:wrap}
+.hud b{color:var(--red2)}
+/* fullscreen + quality controls on hero */
+.hero-ctrl{position:absolute;bottom:14px;right:4vw;z-index:4;display:flex;gap:8px;opacity:0;transition:opacity .3s}
+.hero:hover .hero-ctrl{opacity:1}
+.cb{width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;color:#fff;transition:all var(--tr)}
+.cb:hover{background:var(--red)}
+.qbadge{align-self:center;font-size:10px;font-family:monospace;background:rgba(0,0,0,.55);border:1px solid var(--bd);color:var(--gold);padding:5px 9px;border-radius:6px;font-weight:700}
+.qmenu{position:absolute;bottom:60px;right:4vw;z-index:5;background:rgba(20,20,24,.97);border:1px solid var(--bd);border-radius:10px;padding:6px;display:none;flex-direction:column;gap:2px;min-width:130px}
+.qmenu.show{display:flex}
+.qi{padding:8px 13px;border-radius:6px;font-size:12px;font-weight:600;color:var(--t2);text-align:left}
+.qi:hover{background:var(--card2);color:#fff}.qi.on{color:var(--red2)}
+/* ── ROWS ── */
+.rows{position:relative;z-index:5;margin-top:-30px;padding-bottom:60px}
+.row{margin:26px 0}
+.row-head{display:flex;align-items:center;justify-content:space-between;padding:0 4vw;margin-bottom:12px}
+.row-title{font-size:clamp(15px,2vw,21px);font-weight:800}
+.row-title .cnt{font-size:12px;color:var(--t3);font-weight:600;margin-left:8px}
+.row-scroll{display:flex;gap:9px;overflow-x:auto;padding:6px 4vw;scroll-behavior:smooth;scrollbar-width:none}
+.tile{position:relative;flex:0 0 auto;width:168px;aspect-ratio:16/10;border-radius:8px;overflow:hidden;background:var(--card);cursor:pointer;transition:transform var(--tr),box-shadow var(--tr);border:1px solid var(--bd)}
+.tile:hover{transform:scale(1.07);box-shadow:0 10px 30px rgba(0,0,0,.6);z-index:6;border-color:rgba(255,255,255,.25)}
+.tile img{width:100%;height:100%;object-fit:cover}
+.tile .tph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#26262e,#1b1b22)}
+.tile-grad{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.85) 0,transparent 55%);display:flex;flex-direction:column;justify-content:flex-end;padding:8px 10px}
+.tile-name{font-size:11px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile-cat{font-size:8.5px;color:var(--t3);margin-top:2px}
+.tile-live{position:absolute;top:7px;left:7px;background:var(--red);font-size:7.5px;font-weight:800;padding:2px 6px;border-radius:3px;letter-spacing:.5px}
+.tile-fav{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity var(--tr)}
+.tile:hover .tile-fav{opacity:1}.tile-fav.on{opacity:1;color:var(--red2)}
+.tile.locked .tile-grad::after{content:'🔒';position:absolute;top:8px;right:8px;font-size:12px}
+.empty-row{padding:0 4vw;color:var(--t3);font-size:13px;font-style:italic}
+/* ── category cards ── */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;padding:0 4vw}
+.cat-card{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;cursor:pointer;background:linear-gradient(135deg,#20202a,#15151b);border:1px solid var(--bd);transition:transform var(--tr),border-color var(--tr)}
+.cat-card:hover{transform:scale(1.045);border-color:var(--red)}
+.cat-card .cc-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.22;filter:blur(1px)}
+.cat-card .cc-ico{position:absolute;top:12px;right:14px;font-size:30px;opacity:.85;z-index:1}
+.cat-card .cc-info{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:flex-end;padding:14px;background:linear-gradient(0deg,rgba(0,0,0,.75),transparent 70%)}
+.cat-card .cc-name{font-size:18px;font-weight:800;line-height:1.15}
+.cat-card .cc-count{font-size:12px;color:var(--t2);margin-top:3px}
+/* ── channel grid (drill-down) ── */
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px;padding:0 4vw}
+.ch-grid .tile{width:auto}
+/* ── back bar ── */
+.back-bar{display:flex;align-items:center;gap:14px;padding:0 4vw;margin-bottom:16px}
+/* ── MODAL (setup) ── */
+.modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.8);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.modal.show{display:flex}
+.sheet{background:var(--bg2);border:1px solid var(--bd);border-radius:14px;width:100%;max-width:640px;padding:24px}
+.sheet h2{font-size:20px;font-weight:900;margin-bottom:4px}
+.sheet p.sub{font-size:13px;color:var(--t2);margin-bottom:18px}
+.close-x{position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff}
+.fl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);display:block;margin-bottom:6px}
+.fi{width:100%;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:11px 13px;color:#fff;font-size:13px;outline:none;transition:border-color var(--tr)}
+.fi:focus{border-color:var(--red)}.fi::placeholder{color:var(--t3)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.stab{padding:8px 16px;border-radius:7px;font-size:12px;font-weight:700;color:var(--t2);background:var(--card)}
+.stab.on{background:var(--red);color:#fff}
+.logb{background:#000;border:1px solid var(--bd);border-radius:8px;padding:10px;max-height:120px;overflow-y:auto;display:none;flex-direction:column;gap:3px;margin-top:12px;font-family:monospace}
+.logb.show{display:flex}.ll{font-size:10px;color:var(--t2)}.ll.ok{color:#22c55e}.ll.err{color:var(--red2)}
+.preset{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--card);margin-bottom:8px}
+.preset .pn{font-size:13px;font-weight:800}.preset .pt{font-size:10px;color:var(--t3);font-family:monospace;margin-top:2px}
+.ptag{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:2px 6px;border-radius:4px;margin-left:6px}
+.ptag.mac{background:rgba(139,92,246,.2);color:#a78bfa}.ptag.xt{background:rgba(59,130,246,.2);color:#60a5fa}.ptag.m3u{background:rgba(34,197,94,.2);color:#4ade80}
+.ptag.ok{background:rgba(34,197,94,.2);color:#4ade80}.ptag.warn{background:rgba(245,158,11,.2);color:#fbbf24}
+.banner{padding:12px 14px;border-radius:10px;font-size:12px;line-height:1.6;margin-bottom:14px}
+.banner.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#a7f3c8}
+.banner.warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fcd9a0}
+.toast-box{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{padding:11px 20px;border-radius:8px;font-size:13px;font-weight:700;background:#fff;color:#000;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.toast.err{background:var(--red);color:#fff}.toast.ok{background:#22c55e;color:#fff}
+/* fullscreen player overlay (immersive) */
+.fs-player{position:fixed;inset:0;z-index:300;background:#000;display:none}
+.fs-player.show{display:block}
+.fs-player video,.fs-player iframe{width:100%;height:100%;object-fit:contain;border:none}
+.fs-bar{position:absolute;top:0;left:0;right:0;padding:16px 24px;display:flex;align-items:center;gap:14px;background:linear-gradient(180deg,rgba(0,0,0,.8),transparent);z-index:5;opacity:1;transition:opacity .4s}
+.fs-bar.hide{opacity:0}
+.fs-bar b{font-size:16px}
+@media(max-width:700px){
+ .nav-links{display:none}.nav-search input{width:120px}
+ .tile{width:140px}.hero{height:54vh;min-height:340px}
+}
+body.tv .tile:focus{transform:scale(1.1);box-shadow:0 0 0 3px var(--red);z-index:7}
+body.tv .nav-link:focus,body.tv .btn:focus{outline:3px solid var(--red);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+ <div class="logo">MY<span>MATE</span></div>
+ <div class="nav-links" id="navLinks"></div>
+ <div class="nav-right">
+  <div class="nav-search"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input id="search" type="search" placeholder="Search" oninput="onSearch(this.value)"/></div>
+  <button class="icon-btn" onclick="openSetup()" title="Sources / Settings"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4m11-11h-4M5 12H1m16.5-7.5-3 3m-9 9-3 3m15 0-3-3m-9-9-3-3"/></svg></button>
+  <div class="icon-btn" title="Drive sync status"><span class="drive-dot" id="driveDot"></span></div>
+ </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="hero">
+ <div class="hero-bg" id="heroBg">
+  <video id="vid" playsinline webkit-playsinline preload="none"></video>
+  <iframe id="ifr" allowfullscreen allow="autoplay;fullscreen;encrypted-media"></iframe>
+  <div class="ph">📺</div>
+ </div>
+ <div class="hero-fade"></div>
+ <div class="hero-loading" id="heroLoading"><div class="spin"></div><p style="color:var(--t2);font-size:13px" id="loadL">Loading your channels from Drive…</p></div>
+ <div class="hero-err" id="heroErr"><svg width="46" height="46" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24" style="opacity:.3"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><p style="font-weight:800;color:#fff" id="errT">Stream unavailable</p><p style="font-size:12px" id="errD"></p><button class="btn btn-ghost" style="margin-top:6px" onclick="openExt()">Open in new tab ⧉</button></div>
+ <div class="hero-content">
+  <div class="hero-badge" id="heroBadge" style="display:none"><span style="width:6px;height:6px;background:#fff;border-radius:50%"></span> LIVE NOW</div>
+  <h1 class="hero-title" id="heroTitle">Welcome to Mymate</h1>
+  <div class="hero-meta" id="heroMeta">Connect a source to start watching</div>
+  <div class="hero-btns">
+   <button class="btn btn-play" onclick="enterFullscreen()"><svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play</button>
+   <button class="btn btn-ghost" onclick="toggleFavHero()" id="favHeroBtn"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> My List</button>
+   <button class="btn btn-ghost" onclick="openSetup()"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Source</button>
+  </div>
+ </div>
+ <div class="hud"><span>ENGINE <b id="hEng">—</b></span><span>RES <b id="hRes">—</b></span><span>BW <b id="hBw">—</b></span><span>BUF <b id="hBuf">—</b></span></div>
+ <div class="hero-ctrl">
+  <span class="qbadge" id="qBadge">AUTO</span>
+  <button class="cb" onclick="qMenu()" title="Quality"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4m0 14v4m11-11h-4M5 12H1"/></svg></button>
+  <button class="cb" onclick="toggleMute()"><svg id="mI" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>
+  <button class="cb" onclick="enterFullscreen()" title="Fullscreen"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>
+ </div>
+ <div class="qmenu" id="qm"></div>
+</header>
+
+<!-- ROWS -->
+<main class="rows" id="rows"></main>
+
+<!-- FULLSCREEN PLAYER -->
+<div class="fs-player" id="fsPlayer">
+ <div class="fs-bar" id="fsBar"><button class="cb" onclick="exitFullscreen()"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button><b id="fsName">—</b></div>
+</div>
+
+<!-- SETUP MODAL -->
+<div class="modal" id="setupModal">
+ <div class="sheet" style="position:relative">
+  <button class="close-x" onclick="closeSetup()">✕</button>
+  <h2>Sources & Settings</h2>
+  <p class="sub">Channels are saved to your Google Drive and load instantly next time.</p>
+
+  <div id="driveBanner" class="banner warn">Checking Drive connection…</div>
+
+  <label class="fl">Apps Script URL (/exec) — your Drive backend</label>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+   <input type="url" id="relayUrl" class="fi" placeholder="https://script.google.com/macros/s/.../exec" style="flex:1;min-width:200px"/>
+   <button class="btn btn-red" onclick="setRelay(document.getElementById('relayUrl').value);pingDrive()">Save & Test</button>
+  </div>
+
+  <p class="fl" style="margin-bottom:10px">Preconfigured Sources</p>
+  <div id="presetList" style="margin-bottom:20px"></div>
+
+  <p class="fl" style="margin-bottom:10px">Add New Source</p>
+  <div class="stabs">
+   <button class="stab on" id="st-m3u" onclick="srcTab('m3u')">M3U</button>
+   <button class="stab" id="st-xt" onclick="srcTab('xt')">Xtream</button>
+   <button class="stab" id="st-stk" onclick="srcTab('stk')">MAC Portal</button>
+  </div>
+  <div id="sf-m3u">
+   <label class="fl">Playlist / Stream URL</label>
+   <input type="url" id="m3uUrl" class="fi" placeholder="http://server/get.php?...&type=m3u_plus" style="margin-bottom:10px"/>
+   <button class="btn btn-red" id="m3uB" onclick="loadM3U()">Load Playlist</button>
+   <div class="logb" id="m3uLog"></div>
+  </div>
+  <div id="sf-xt" style="display:none">
+   <label class="fl">Server URL</label><input type="url" id="xtS" class="fi" placeholder="http://server:port" style="margin-bottom:10px"/>
+   <div class="frow" style="margin-bottom:10px"><div><label class="fl">Username</label><input type="text" id="xtU" class="fi"/></div><div><label class="fl">Password</label><input type="password" id="xtP" class="fi"/></div></div>
+   <button class="btn btn-red" id="xtB" onclick="connXt()">Connect</button>
+   <div class="logb" id="xtLog"></div>
+  </div>
+  <div id="sf-stk" style="display:none">
+   <label class="fl">Portal URL</label><input type="url" id="stkS" class="fi" placeholder="http://portal:port/c/" style="margin-bottom:10px"/>
+   <label class="fl">MAC Address</label><input type="text" id="stkM" class="fi" maxlength="17" placeholder="00:1A:79:XX:XX:XX" oninput="fmtMac(this)" style="margin-bottom:10px;font-family:monospace"/>
+   <button class="btn btn-red" id="stkB" onclick="connStk()">Connect Portal</button>
+   <div class="logb" id="stkLog"></div>
+  </div>
+
+  <div style="margin-top:20px;border-top:1px solid var(--bd);padding-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+   <button class="btn btn-ghost" onclick="saveToDrive(true)">💾 Save all to Drive</button>
+   <button class="btn btn-ghost" onclick="reloadFromDrive()">🔄 Reload from Drive</button>
+  </div>
+ </div>
+</div>
+
+<div class="toast-box" id="tbox"></div>
+
+<script>
+'use strict';
+/* ════ PLATFORM ════ */
+const UA=navigator.userAgent.toLowerCase();
+const isTV=UA.includes('smarttv')||UA.includes('android tv')||UA.includes('googletv')||UA.includes('webos')||UA.includes('tizen')||UA.includes('silk')||UA.includes('aftt')||(UA.includes('android')&&!UA.includes('mobile')&&innerWidth>=1200);
+const isIOS=/iphone|ipad|ipod/.test(UA);
+const isMob=isIOS||(UA.includes('android')&&UA.includes('mobile'))||(innerWidth<=768&&'ontouchstart' in window);
+const isPWA=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+if(isTV)document.body.classList.add('tv');
+(()=>{const m={name:"Mymate TV",short_name:"Mymate",start_url:"./",display:"fullscreen",orientation:isTV?"landscape":"any",background_color:"#0b0b0f",theme_color:"#0b0b0f",icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%230b0b0f'/%3E%3Ctext x='96' y='128' font-size='90' text-anchor='middle' fill='%23e50914' font-weight='bold'%3EM%3C/text%3E%3C/svg%3E",sizes:"192x192",type:"image/svg+xml"}]};try{document.getElementById('pwaManifest').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}))}catch(e){}})();
+
+/* ════ RELAY / DRIVE BACKEND ════ */
+let RELAY_URL=localStorage.getItem('mm_relay')||'https://script.google.com/macros/s/AKfycbwah4yr8An7KWCdG_eISsjMMATunQQiC_KwbhBb28i2p_nxUHxVchTa_tktQVQl96IRHQ/exec';
+const RELAY_TOKEN='mymate2026';
+const relayReady=()=>!!RELAY_URL;
+async function relayGet(params){if(!RELAY_URL)throw new Error('No backend');const u=new URL(RELAY_URL);params.token=RELAY_TOKEN;Object.keys(params).forEach(k=>u.searchParams.set(k,params[k]));const r=await fetch(u.toString(),{redirect:'follow',signal:AbortSignal.timeout(30000)});return r.json();}
+async function relayPost(body){if(!RELAY_URL)throw new Error('No backend');body.token=RELAY_TOKEN;const r=await fetch(RELAY_URL,{method:'POST',body:JSON.stringify(body),redirect:'follow',signal:AbortSignal.timeout(30000)});return r.json();}
+function setRelay(u){RELAY_URL=(u||'').trim();localStorage.setItem('mm_relay',RELAY_URL);toast(RELAY_URL?'Backend saved':'Cleared',RELAY_URL?'ok':'');}
+
+/* ════ STATE ════ */
+const APP={chs:[],cats:[],act:null,q:'',pls:[],hls:null,dash:null,mpegts:null,abr:true,cap:true,low:false,adultUnlocked:false,viewCat:null,viewFav:false,
+ favs:JSON.parse(localStorage.getItem('mm_favs')||'[]'),_lv:[]};
+const saveFavs=()=>localStorage.setItem('mm_favs',JSON.stringify(APP.favs));
+
+/* ════ PRESETS ════ */
+const PRESETS=[
+ {id:'fifa',name:'FIFA+ (Free)',type:'m3u',tag:'m3u',web:true,single:true,url:'https://a62dad94.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWV1X0ZJRkFQbHVzRW5nbGlzaF9ITFM/playlist.m3u8',cat:'🏆 Sports'},
+ {id:'nando',name:'Nando MAC',type:'stk',tag:'mac',portal:'http://mag.nando2025.vip:80/c/',mac:'00:1B:79:43:0F:BE'},
+ {id:'livebox',name:'RKDY livebox.pro',type:'stk',tag:'mac',portal:'http://livebox.pro:80/c/',mac:'00:1A:79:00:00:56'},
+ {id:'supreme',name:'RKDY SupremeTV',type:'stk',tag:'mac',portal:'http://vod.supremetv.live:80/c/',mac:'00:1A:79:00:00:5A'},
+ {id:'nxbrush',name:'RKDY M3U Pro Max',type:'xt',tag:'xt',server:'http://nxbrush.xyz:8080',user:'sukrucolak',pass:'O9vWBqSut2'}
+];
+
+/* ════ CATEGORIES ════ */
+const ADULT_RX=/\b(xxx|adult|porn|18\+|sex|hardcore|erotic|playboy|brazzers|hustler|nude|naked|milf|x-?rated)\b/i;
+const ADULT_CAT='🔞 Adult (18+)';
+const CR=[
+ [/\b(news|haber|noticias|notizie|aktuel|24 ?h|cnn|bbc|fox news|wion|ndtv|mediaone|janam|aljazeera|haberler)\b/i,'📰 News'],
+ [/\b(sport|spor|deporte|calcio|fussball|fifa|espn|bein|football|futbol|cricket|nba|nfl|ufc|formula|f1|tennis|golf|wwe|dazn|league|liga|bundesliga)\b/i,'🏆 Sports'],
+ [/\b(movie|cinema|sinema|kino|cine|pelicula|film|hbo|action|thriller|hits|premiere|box ?office)\b/i,'🎬 Movies'],
+ [/\b(kids|cartoon|cocuk|çocuk|kinder|nick|disney|toon|junior|baby|ninos)\b/i,'🧒 Kids'],
+ [/\b(music|muzik|müzik|musik|musica|mtv|vevo|song|9xm|beats|radyo|radio)\b/i,'🎵 Music'],
+ [/\b(doc|belgesel|dokus?|documental|discovery|nat ?geo|history|nature|animal|safari|science|bilim)\b/i,'📚 Documentary'],
+ [/\b(relig|dini|bhakti|islam|quran|gospel|christ|devotional|kirche)\b/i,'🕌 Religious'],
+ [/\b(star|zee|colors|sony|asianet|kairali|mazhavil|surya|entertain|genel|allgemein|general)\b/i,'🎭 Entertainment']
+];
+function autoCat(n,g){
+ if(ADULT_RX.test(n)||ADULT_RX.test(g||''))return ADULT_CAT;
+ // Stalker genre ids ("Genre 728") and junk groups are useless — ignore, use the name.
+ const grp=(g||'').trim();
+ const goodGroup=grp&&!/^genre\s*\d+$/i.test(grp)&&!/^(general|undefined|null|n\/a|other|uncategor|genel)/i.test(grp);
+ for(const[rx,l]of CR)if(rx.test(n))return l;
+ if(goodGroup)return grp;
+ return '📺 General';
+}
+function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* ════ DRIVE LOAD / SAVE ════ */
+// Build the compact, storable config (no EPG, minimal fields).
+function buildCfg(){
+ return {v:1,t:Date.now(),pls:APP.pls.map(p=>({id:p.id,name:p.name,type:p.type,presetId:p.presetId||'',channels:p.channels.map(c=>({id:c.id,name:c.name,cat:c.cat,logo:c.logo,url:c.url,portal:c.portal,mac:c.mac,token:c.token,raw:c.raw,viaRelay:c.viaRelay}))}))};
+}
+// L1 cache: localStorage (instant). Keeps the app from waiting on the network.
+function saveCache(){ try{localStorage.setItem('mm_cache',JSON.stringify(buildCfg()));}catch(e){} }
+function loadCache(){ try{const c=JSON.parse(localStorage.getItem('mm_cache')||'null');if(c&&Array.isArray(c.pls)&&c.pls.length){APP.pls=c.pls;return true;}}catch(e){} return false; }
+
+async function loadFromDrive(){
+ if(!relayReady())return false;
+ try{
+  const j=await relayGet({action:'loadConfig'});
+  if(j.ok&&j.config&&Array.isArray(j.config.pls)&&j.config.pls.length){
+   APP.pls=j.config.pls;rebuild();saveCache();return true;
+  }
+ }catch(e){}
+ return false;
+}
+// L2 sync: Drive. Debounced so rapid adds don't fire many big uploads.
+let _saveT=null;
+function saveToDrive(notify){
+ saveCache();                                   // instant local cache first
+ if(!relayReady()){if(notify)toast('Set the backend URL first','err');return;}
+ clearTimeout(_saveT);
+ _saveT=setTimeout(async()=>{
+  try{const j=await relayPost({action:'saveConfig',config:JSON.stringify(buildCfg())});if(j.ok&&notify)toast('Saved to Drive ✓','ok');}
+  catch(e){if(notify)toast('Drive save failed','err');}
+ }, notify?0:1500);
+}
+async function reloadFromDrive(){toast('Reloading from Drive…','');const ok=await loadFromDrive();toast(ok?'Loaded from Drive':'Nothing saved yet',ok?'ok':'');}
+
+/* ════ PLAYLIST MGMT ════ */
+function addPlaylist(items,name,type,presetId){
+ const pl={id:'pl'+Date.now(),name,type,channels:items,presetId:presetId||''};
+ if(presetId)APP.pls=APP.pls.filter(p=>p.presetId!==presetId);
+ APP.pls.push(pl);rebuild();saveToDrive(false);return pl;
+}
+function rebuild(){
+ APP.chs=APP.pls.flatMap(p=>p.channels);
+ const cm={};APP.chs.forEach(c=>{c.cat=c.cat||autoCat(c.name,'');cm[c.cat]=(cm[c.cat]||0)+1;});
+ // order: put common cats first, adult last
+ const order=['🏆 Sports','📰 News','🎬 Movies','🎭 Entertainment','🧒 Kids','🎵 Music','📚 Documentary','🕌 Religious','📺 General'];
+ const keys=Object.keys(cm).sort((a,b)=>{const ia=order.indexOf(a),ib=order.indexOf(b);if(a===ADULT_CAT)return 1;if(b===ADULT_CAT)return -1;return (ia<0?99:ia)-(ib<0?99:ib);});
+ APP.cats=keys;
+ render();
+}
+function filtChs(cat){
+ let p=APP.chs.filter(c=>c.cat===cat);
+ if(cat===ADULT_CAT&&!APP.adultUnlocked)return [];
+ return p;
+}
+
+/* ════ RENDER (category-first) ════ */
+function render(){
+ renderNav();renderMain();renderPresets();
+ driveDot.className='drive-dot'+(relayReady()?' ok':'');
+}
+// Minimal, fixed nav — NO per-category explosion.
+function renderNav(){
+ const el=navLinks;el.innerHTML='';
+ const items=[{id:'home',n:'Home'},{id:'fav',n:'My List'}];
+ items.forEach(it=>{const a=document.createElement('a');a.className='nav-link'+((it.id==='home'&&APP.viewCat===null&&APP.viewFav!==true)||(it.id==='fav'&&APP.viewFav)?' on':'');a.textContent=it.n;a.onclick=()=>{if(it.id==='home'){APP.viewCat=null;APP.viewFav=false;APP.q='';search.value='';}else{APP.viewFav=true;APP.viewCat=null;}renderMain();renderNav();scrollToRows();};el.appendChild(a);});
+}
+function scrollToRows(){const r=document.getElementById('rows');if(r)r.scrollIntoView({behavior:'smooth',block:'start'});}
+
+const CAT_ICON={'🏆 Sports':'🏆','📰 News':'📰','🎬 Movies':'🎬','🧒 Kids':'🧒','🎵 Music':'🎵','📚 Documentary':'📚','🕌 Religious':'🕌','🎭 Entertainment':'🎭','📺 General':'📺','🔞 Adult (18+)':'🔞'};
+function catCount(cat){return APP.chs.filter(c=>c.cat===cat).length;}
+function catSampleLogo(cat){const c=APP.chs.find(x=>x.cat===cat&&x.logo);return c?c.logo:'';}
+
+function tileHTML(c){
+ const fav=APP.favs.includes(c.id);
+ return `<div class="tile" tabindex="0" data-id="${c.id}">
+   ${c.logo?`<img src="${esc(c.logo)}" loading="lazy" onerror="this.outerHTML='<div class=tph>📺</div>'"/>`:'<div class="tph">📺</div>'}
+   <div class="tile-live">LIVE</div>
+   <div class="tile-fav${fav?' on':''}" data-fav="${c.id}"><svg width="12" height="12" fill="${fav?'currentColor':'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+   <div class="tile-grad"><p class="tile-name">${esc(c.name)}</p></div>
+ </div>`;
+}
+
+function renderMain(){
+ const el=rows;el.innerHTML='';
+ if(!APP.chs.length){el.innerHTML='<div class="empty-row" style="padding-top:30px">No channels yet. Tap the ⚙ icon (or "Add Source") to connect a playlist — it will be saved to your Drive.</div>';return;}
+
+ // ── SEARCH RESULTS ──
+ if(APP.q){
+  const q=APP.q.toLowerCase();
+  const res=APP.chs.filter(c=>(c.cat!==ADULT_CAT||APP.adultUnlocked)&&(c.name.toLowerCase().includes(q)||c.cat.toLowerCase().includes(q)));
+  el.appendChild(headerBar('Search: "'+esc(APP.q)+'"',res.length,false));
+  el.appendChild(channelGrid(res));
+  return;
+ }
+
+ // ── MY LIST ──
+ if(APP.viewFav){
+  const favCh=APP.chs.filter(c=>APP.favs.includes(c.id));
+  el.appendChild(headerBar('❤️ My List',favCh.length,true));
+  el.appendChild(favCh.length?channelGrid(favCh):emptyEl('No favourites yet — tap the ♥ on any channel.'));
+  return;
+ }
+
+ // ── CATEGORY DRILL-DOWN (channels in one category) ──
+ if(APP.viewCat){
+  if(APP.viewCat===ADULT_CAT&&!APP.adultUnlocked){el.appendChild(headerBar('🔞 Adult (18+)',0,true));el.appendChild(emptyEl('Locked. Tap to unlock.'));unlockAdult();return;}
+  const list=APP.chs.filter(c=>c.cat===APP.viewCat);
+  el.appendChild(headerBar(APP.viewCat,list.length,true));
+  el.appendChild(channelGrid(list));
+  return;
+ }
+
+ // ── HOME: CATEGORY CARDS ──
+ const head=document.createElement('div');head.className='row-head';head.style.marginBottom='16px';
+ head.innerHTML='<h2 class="row-title">Browse Categories<span class="cnt">'+APP.cats.length+'</span></h2>';
+ el.appendChild(head);
+ const grid=document.createElement('div');grid.className='cat-grid';
+ APP.cats.forEach(cat=>{
+  const cnt=catCount(cat);if(!cnt)return;
+  const locked=cat===ADULT_CAT&&!APP.adultUnlocked;
+  const logo=catSampleLogo(cat);
+  const card=document.createElement('div');card.className='cat-card';card.tabIndex=0;
+  card.innerHTML=`${logo?`<img class="cc-bg" src="${esc(logo)}" loading="lazy" onerror="this.remove()"/>`:''}<div class="cc-ico">${CAT_ICON[cat]||'📺'}</div><div class="cc-info"><p class="cc-name">${esc(cat.replace(/^[^\sA-Za-z0-9]+\s*/,''))} ${locked?'🔒':''}</p><p class="cc-count">${cnt} channels</p></div>`;
+  card.onclick=()=>{if(locked){unlockAdult();return;}APP.viewCat=cat;APP.viewFav=false;renderMain();renderNav();scrollToRows();};
+  card.onkeydown=e=>{if(e.key==='Enter')card.onclick();};
+  grid.appendChild(card);
+ });
+ el.appendChild(grid);
+}
+
+function headerBar(title,count,back){
+ const d=document.createElement('div');d.className='back-bar';
+ d.innerHTML=(back?'<button class="cb" id="backBtn" title="Back"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button>':'')+`<h2 class="row-title">${esc(title)}<span class="cnt">${count}</span></h2>`;
+ if(back){d.querySelector('#backBtn').onclick=()=>{APP.viewCat=null;APP.viewFav=false;APP.q='';search.value='';renderMain();renderNav();scrollTo({top:0,behavior:'smooth'});};}
+ return d;
+}
+function channelGrid(list){
+ const wrap=document.createElement('div');
+ const g=document.createElement('div');g.className='ch-grid';wrap.appendChild(g);
+ const PAGE=120;let shown=0;
+ function bind(scope){scope.querySelectorAll('.tile:not([data-bound])').forEach(t=>{t.setAttribute('data-bound','1');const id=t.dataset.id;const c=APP.chs.find(x=>x.id===id);t.onclick=e=>{const fb=e.target.closest('[data-fav]');if(fb){toggleFav(fb.dataset.fav);return;}playCh(c);};t.onkeydown=e=>{if(e.key==='Enter')playCh(c);};});}
+ function more(){const slice=list.slice(shown,shown+PAGE);g.insertAdjacentHTML('beforeend',slice.map(tileHTML).join(''));shown+=slice.length;bind(g);if(shown>=list.length&&btn)btn.remove();}
+ let btn=null;
+ more();
+ if(list.length>PAGE){btn=document.createElement('button');btn.className='btn btn-ghost';btn.style.cssText='margin:18px 4vw';btn.textContent='Load more ('+(list.length-shown)+' left)';btn.onclick=()=>{more();btn.textContent='Load more ('+(list.length-shown)+' left)';};wrap.appendChild(btn);}
+ return wrap;
+}
+function emptyEl(msg){const d=document.createElement('div');d.className='empty-row';d.textContent=msg;return d;}
+function unlockAdult(){const e=prompt('🔞 Enter PIN to unlock:');if(e===null)return;if(e.trim()!=='1234'){toast('Incorrect PIN','err');return;}APP.adultUnlocked=true;toast('Unlocked','ok');render();}
+
+/* ════ PRESETS UI ════ */
+function renderPresets(){
+ const el=presetList;el.innerHTML='';
+ PRESETS.forEach(p=>{
+  const loaded=APP.pls.some(x=>x.presetId===p.id);
+  const needRelay=p.type==='stk'||/^http:\/\//i.test(p.server||p.url||'');
+  const ready=p.web||!needRelay||relayReady();
+  let badge=p.web?'<span class="ptag ok">WEB</span>':ready?'<span class="ptag ok">READY</span>':'<span class="ptag warn">NEEDS BACKEND</span>';
+  const d=document.createElement('div');d.className='preset';
+  d.innerHTML=`<div style="min-width:0"><div><span class="pn">${esc(p.name)}</span><span class="ptag ${p.tag}">${p.tag.toUpperCase()}</span>${badge}</div><p class="pt">${esc((p.portal||p.server||p.url||'').substring(0,42))}</p></div><button class="btn ${loaded?'btn-ghost':'btn-red'}" style="padding:8px 16px;font-size:12px" data-c="${p.id}">${loaded?'✓ Loaded':'Connect'}</button>`;
+  d.querySelector('[data-c]').onclick=()=>connectPreset(p);
+  el.appendChild(d);
+ });
+}
+async function connectPreset(p,silent){
+ if(p.type==='m3u'&&p.single){const ch={id:'fifa_'+Date.now(),name:'FIFA+ English',cat:p.cat,logo:'',url:p.url,viaRelay:false};addPlaylist([ch],p.name,'m3u',p.id);if(!silent){toast('FIFA+ added','ok');renderPresets();}return;}
+ if(!relayReady()){if(!silent)toast('Set the backend URL first','err');return;}
+ if(p.type==='stk'){
+  if(!silent){toast('Connecting '+p.name+'…','');logT('stkLog','Handshake @ '+p.portal,'');}
+  try{const j=await relayGet({action:'stalker',portal:p.portal,mac:p.mac});
+   if(!j.ok){if(!silent){toast(j.error||'MAC failed','err');logT('stkLog','✗ '+(j.error||''),'err');}return;}
+   const items=j.channels.map(c=>({id:c.id,name:c.name,cat:autoCat(c.name,c.group),logo:c.logo,url:c.url,portal:c.portal,mac:c.mac,token:c.token,raw:c.raw,viaRelay:true}));
+   addPlaylist(items,p.name,'stk',p.id);if(!silent){toast(p.name+': '+items.length+' ch','ok');logT('stkLog','✓ '+items.length+' channels','ok');renderPresets();}
+  }catch(e){if(!silent)toast('Backend error','err');}return;
+ }
+ if(p.type==='xt'){
+  if(!silent){toast('Connecting '+p.name+'…','');logT('xtLog','Auth…','');}
+  try{const j=await relayGet({action:'xtream',server:p.server,user:p.user,pass:p.pass});
+   if(!j.ok){if(!silent){toast(j.error||'Xtream failed','err');logT('xtLog','✗ '+(j.error||''),'err');}return;}
+   const items=j.channels.map(c=>({id:c.id,name:c.name,cat:autoCat(c.name,c.group),logo:c.logo,url:c.url,viaRelay:false}));
+   addPlaylist(items,p.name,'xt',p.id);if(!silent){toast(p.name+': '+items.length+' ch','ok');logT('xtLog','✓ '+items.length+' channels','ok');renderPresets();}
+  }catch(e){if(!silent)toast('Backend error','err');}return;
+ }
+}
+
+/* ════ MULTI-ENGINE PLAYER + ADAPTIVE BUFFER ════ */
+const V=document.getElementById('vid'),IF=document.getElementById('ifr');
+function destroyEngines(){if(APP.hls){try{APP.hls.destroy()}catch(e){}APP.hls=null;}if(APP.dash){try{APP.dash.reset()}catch(e){}APP.dash=null;}if(APP.mpegts){try{APP.mpegts.destroy()}catch(e){}APP.mpegts=null;}}
+function bufProfile(){const conn=navigator.connection;const dl=(conn&&conn.downlink)||0;const slow=dl>0&&dl<3,mid=dl>=3&&dl<8;const initBw=conn&&conn.downlink?Math.max(300000,conn.downlink*1e6*.8):1500000;return{slow,mid,initBw,buf:slow?90:mid?45:28,maxBuf:slow?240:mid?150:110,startLow:APP.low||slow};}
+async function playCh(c){
+ if(!c)return;APP.act=c;
+ heroBadge.style.display='inline-flex';heroTitle.textContent=c.name;heroMeta.innerHTML=`<b>● LIVE</b> &nbsp;·&nbsp; ${esc(c.cat)} &nbsp;·&nbsp; HD`;
+ fsName.textContent=c.name;updFavHero();
+ let url=c.url||'';
+ heroLoading.style.display='flex';heroErr.style.display='none';loadL.textContent='Resolving '+c.name+'…';
+ // Stalker: resolve fresh link via Drive backend
+ if(c.viaRelay&&c.portal&&c.token&&c.raw&&relayReady()){
+  try{const j=await relayGet({action:'stalkerLink',portal:c.portal,mac:c.mac,token:c.token,cmd:c.raw});if(j.ok&&j.url)url=j.url;}catch(e){}
+ }
+ startStream(url,c);
+ scrollTo({top:0,behavior:'smooth'});
+}
+// Robust play: browsers block autoplay WITH sound, so retry muted, then show unmute hint.
+function safePlay(){
+ V.play().then(()=>{heroLoading.style.display='none';}).catch(()=>{
+   V.muted=true;mI.style.opacity=.4;
+   V.play().then(()=>{heroLoading.style.display='none';toast('Tap 🔊 to unmute','');}).catch(()=>{});
+ });
+}
+function startStream(url,c){
+ destroyEngines();V.style.display='none';IF.style.display='none';heroErr.style.display='none';heroLoading.style.display='flex';
+ if(!url){heroError('No stream URL','');return;}
+ if(location.protocol==='https:'&&/^http:\/\//i.test(url)){heroError('HTTP stream blocked on HTTPS','Tap "Open in new tab", or host this page over http://.');return;}
+ if(url.includes('youtube.com')||url.includes('youtu.be')){const v=url.match(/(?:v=|youtu\.be\/)([^&?/\s]+)/)?.[1];if(v){IF.src='https://www.youtube.com/embed/'+v+'?autoplay=1&rel=0';IF.style.display='block';heroLoading.style.display='none';return;}}
+ const u=url.toLowerCase();
+ if(/\.(mkv|avi|wmv)(\?|$)/i.test(u)){heroError('Format not supported in-browser','MKV/AVI/WMV can\'t play inline. Use "Open in new tab" or a native app.');return;}
+ const isDash=/\.mpd(\?|$)/i.test(u),isTs=/\.(ts|m2ts|mts)(\?|$)/i.test(u)||u.includes('mpegts'),isFlv=/\.flv(\?|$)/i.test(u),isMp4=/\.(mp4|m4v|webm|mov|ogv)(\?|$)/i.test(u);
+ const isHls=/\.m3u8(\?|$)/i.test(u)||u.includes('/live/')||u.includes('/hls/')||u.includes('get.php')||u.includes('/play/')||u.includes('manifest');
+ const p=bufProfile();
+ if(isDash&&window.dashjs){APP.dash=dashjs.MediaPlayer().create();APP.dash.updateSettings({streaming:{buffer:{bufferToKeep:p.buf,initialBufferLevel:p.slow?8:2}}});APP.dash.initialize(V,url,true);APP.dash.on('streamInitialized',()=>{V.style.display='block';heroLoading.style.display='none';});APP.dash.on('error',()=>nativeOrDirect(url));hEng.textContent='dash.js';qBadge.textContent='AUTO';return;}
+ if((isTs||isFlv)&&window.mpegts&&mpegts.isSupported()){APP.mpegts=mpegts.createPlayer({type:isFlv?'flv':'mpegts',isLive:true,url},{enableWorker:true,liveBufferLatencyChasing:true,lazyLoadMaxDuration:p.buf});APP.mpegts.attachMediaElement(V);APP.mpegts.load();V.style.display='block';heroLoading.style.display='none';safePlay();APP.mpegts.on(mpegts.Events.ERROR,()=>nativeOrDirect(url));hEng.textContent=isFlv?'FLV':'MPEG-TS';qBadge.textContent='LIVE';return;}
+ if(isMp4&&!isHls){nativeOrDirect(url);return;}
+ if(window.Hls&&Hls.isSupported()){
+  const cfg={startLevel:p.startLow?0:-1,abrEwmaDefaultEstimate:p.initBw,abrEwmaFastLive:p.slow?5:3,abrEwmaSlowLive:p.slow?12:9,abrBandWidthFactor:p.slow?.7:.9,abrBandWidthUpFactor:p.slow?.5:.7,abrMaxWithRealBitrate:true,capLevelToPlayerSize:APP.cap,maxBufferLength:p.buf,maxMaxBufferLength:p.maxBuf,maxBufferSize:p.slow?120e6:60e6,backBufferLength:30,highBufferWatchdogPeriod:1,nudgeOnVideoHole:true,fragLoadingMaxRetry:8,levelLoadingMaxRetry:8,fragLoadingRetryDelay:500,enableWorker:true,lowLatencyMode:false};
+  let rec=0;APP.hls=new Hls(cfg);APP.hls.loadSource(url);APP.hls.attachMedia(V);
+  APP.hls.on(Hls.Events.MANIFEST_PARSED,(_,d)=>{V.style.display='block';APP._lv=d.levels;safePlay();});
+  APP.hls.on(Hls.Events.LEVEL_SWITCHED,(_,d)=>{const l=APP.hls.levels[d.level];if(l){hRes.textContent=(l.height||'?')+'p';qBadge.textContent=APP.hls.autoLevelEnabled?'AUTO '+(l.height||'')+'p':(l.height||'?')+'p';}});
+  APP.hls.on(Hls.Events.FRAG_BUFFERED,()=>{const bw=APP.hls.bandwidthEstimate;if(bw)hBw.textContent=(bw/1e6).toFixed(1)+'M';const b=V.buffered.length?Math.max(0,V.buffered.end(V.buffered.length-1)-V.currentTime):0;hBuf.textContent=b.toFixed(0)+'s';});
+  APP.hls.on(Hls.Events.ERROR,(_,d)=>{if(!d.fatal)return;if(d.type===Hls.ErrorTypes.NETWORK_ERROR){if(rec<2){rec++;APP.hls.startLoad();}else{destroyEngines();nativeOrDirect(url);}}else if(d.type===Hls.ErrorTypes.MEDIA_ERROR){if(rec<2){rec++;APP.hls.recoverMediaError();}else heroError('Playback error','Codec may be unsupported.');}else{destroyEngines();nativeOrDirect(url);}});
+  hEng.textContent='HLS ABR';return;
+ }
+ nativeOrDirect(url);
+}
+function nativeOrDirect(url){
+ if(V.canPlayType('application/vnd.apple.mpegurl')&&(/\.m3u8/i.test(url)||url.includes('/live/'))){V.src=url;V.style.display='block';V.load();heroLoading.style.display='none';hEng.textContent='Native HLS';qBadge.textContent='AUTO';safePlay();V.onerror=()=>heroError('Stream unavailable','');return;}
+ V.src=url;V.style.display='block';V.load();hEng.textContent='HTML5';safePlay();
+ V.onerror=()=>heroError('Stream unavailable','');
+}
+function heroError(t,d){heroLoading.style.display='none';heroErr.style.display='flex';errT.textContent=t;errD.textContent=d;}
+/* quality menu */
+function qMenu(){const m=qm;m.innerHTML='';const a=document.createElement('button');a.className='qi on';a.textContent='⚡ Auto';a.onclick=()=>{if(APP.hls){APP.hls.currentLevel=-1;qBadge.textContent='AUTO';}m.classList.remove('show');};m.appendChild(a);const seen=new Set();(APP._lv||[]).map((l,i)=>({...l,i})).sort((x,y)=>(y.height||0)-(x.height||0)).forEach(l=>{if(seen.has(l.height))return;seen.add(l.height);const b=document.createElement('button');b.className='qi';b.textContent=(l.height||'?')+'p';b.onclick=()=>{if(APP.hls){APP.hls.currentLevel=l.i;qBadge.textContent=(l.height||'?')+'p';}m.classList.remove('show');};m.appendChild(b);});m.classList.toggle('show');}
+function toggleMute(){V.muted=!V.muted;mI.style.opacity=V.muted?.4:1;}
+/* fullscreen immersive */
+function enterFullscreen(){if(!APP.act){toast('Pick a channel first','');return;}const fp=fsPlayer;fp.classList.add('show');fp.insertBefore(V,fsBar.nextSibling);V.style.display='block';const el=fp;(el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen||(()=>{})).call(el);if(isMob&&V.webkitEnterFullscreen&&!document.fullscreenEnabled)V.webkitEnterFullscreen();autoHideBar();}
+function exitFullscreen(){const fp=fsPlayer;fp.classList.remove('show');heroBg.insertBefore(V,heroBg.firstChild);V.style.display='block';if(document.fullscreenElement)document.exitFullscreen?.();}
+let barT;function autoHideBar(){fsBar.classList.remove('hide');clearTimeout(barT);barT=setTimeout(()=>fsBar.classList.add('hide'),3500);}
+document.getElementById('fsPlayer').addEventListener('mousemove',autoHideBar);
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&fsPlayer.classList.contains('show'))exitFullscreen();});
+function openExt(){if(APP.act?.url)open(APP.act.url,'_blank');}
+/* favs */
+function toggleFav(id){APP.favs.includes(id)?APP.favs=APP.favs.filter(f=>f!==id):APP.favs.push(id);saveFavs();render();updFavHero();}
+function toggleFavHero(){if(APP.act)toggleFav(APP.act.id);}
+function updFavHero(){if(!APP.act)return;const f=APP.favs.includes(APP.act.id);favHeroBtn.style.color=f?'var(--red2)':'';}
+/* search */
+function onSearch(q){APP.q=q;renderRows();}
+
+/* ════ SOURCE FORMS ════ */
+function srcTab(t){['m3u','xt','stk'].forEach(s=>{document.getElementById('sf-'+s).style.display=s===t?'block':'none';document.getElementById('st-'+s).classList.toggle('on',s===t);});}
+function logT(id,m,c){const el=document.getElementById(id);if(!el)return;el.classList.add('show');const p=document.createElement('p');p.className='ll '+(c||'');p.textContent=m;el.appendChild(p);el.scrollTop=el.scrollHeight;}
+async function loadM3U(){const url=(m3uUrl.value||'').trim();if(!url){toast('Enter URL','err');return;}m3uB.disabled=true;m3uB.textContent='Loading…';let text='';try{const r=await fetch(url,{signal:AbortSignal.timeout(12000)});text=await r.text();}catch(e){}if((!text||(!text.includes('#EXTM3U')&&!text.includes('#EXTINF')))&&relayReady()){logT('m3uLog','Direct failed — via backend…');try{const j=await relayGet({action:'fetch',url});if(j.ok)text=j.body;}catch(e){}}if(!text||(!text.includes('#EXTM3U')&&!text.includes('#EXTINF'))){logT('m3uLog','Not a playlist — single stream','err');addPlaylist([{id:'s'+Date.now(),name:url.split('/').pop()?.split('?')[0]?.substring(0,40)||'Stream',cat:'📺 General',logo:'',url,viaRelay:false}],'Single','m3u');}else{const items=parseM3U(text);logT('m3uLog','✓ '+items.length+' channels','ok');addPlaylist(items,(()=>{try{return new URL(url).hostname}catch(e){return'M3U'}})(),'m3u');}m3uB.disabled=false;m3uB.textContent='Load Playlist';toast('Added & saved to Drive','ok');}
+function parseM3U(text){const lines=text.split('\n');let meta=null;const out=[];let n=0;for(let line of lines){line=line.trim();if(line.startsWith('#EXTINF')){const name=(line.match(/,(.+)$/)||[])[1]?.trim()||'Channel';const grp=(line.match(/group-title="([^"]*)"/)|| [])[1]||'';const logo=(line.match(/tvg-logo="([^"]*)"/)|| [])[1]||'';meta={name,grp,logo};}else if(line&&!line.startsWith('#')&&meta&&n<5000){out.push({id:'c'+Date.now()+'_'+n,name:meta.name.substring(0,60),cat:autoCat(meta.name,meta.grp),logo:meta.logo,url:line,viaRelay:false});n++;meta=null;}}return out;}
+function connXt(){const p={type:'xt',name:(()=>{try{return new URL(xtS.value).hostname}catch(e){return'Xtream'}})(),server:(xtS.value||'').trim(),user:(xtU.value||'').trim(),pass:(xtP.value||'').trim()};if(!p.server||!p.user||!p.pass){toast('Fill all fields','err');return;}xtB.disabled=true;xtB.textContent='Connecting…';connectPreset(p).finally(()=>{xtB.disabled=false;xtB.textContent='Connect';});}
+function connStk(){const p={type:'stk',name:'Stalker · '+(()=>{try{return new URL((stkS.value||'').replace(/\/c\/?$/,'')).hostname}catch(e){return'MAC'}})(),portal:(stkS.value||'').trim(),mac:(stkM.value||'').trim()};if(!p.portal||!p.mac){toast('Fill fields','err');return;}stkB.disabled=true;stkB.textContent='Connecting…';connectPreset(p).finally(()=>{stkB.disabled=false;stkB.textContent='Connect Portal';});}
+function fmtMac(i){let v=i.value.replace(/[^0-9A-Fa-f]/g,'');i.value=(v.match(/.{1,2}/g)?.join(':').substring(0,17)||v).toUpperCase();}
+
+/* ════ MODAL ════ */
+function openSetup(){setupModal.classList.add('show');if(relayReady())relayUrl.value=RELAY_URL;pingDrive();renderPresets();}
+function closeSetup(){setupModal.classList.remove('show');}
+async function pingDrive(){const b=driveBanner;if(!relayReady()){b.className='banner warn';b.innerHTML='⚙ No backend set. Paste your Apps Script /exec URL above to load &amp; save channels in Drive.';driveDot.className='drive-dot';return;}b.className='banner warn';b.textContent='Testing…';try{const j=await relayGet({action:'ping'});if(j&&j.ok){b.className='banner ok';b.innerHTML='✓ <b>Connected to your Drive backend.</b> Channels load &amp; save here automatically.';driveDot.className='drive-dot ok';renderPresets();return;}}catch(e){}b.className='banner warn';b.innerHTML='✗ Backend unreachable. Check the /exec URL and that access = Anyone.';driveDot.className='drive-dot bad';}
+
+/* ════ TOAST ════ */
+function toast(m,c){const t=document.createElement('div');t.className='toast '+(c||'');t.textContent=m;tbox.appendChild(t);setTimeout(()=>t.remove(),3000);}
+
+/* ════ NAV SCROLL ════ */
+addEventListener('scroll',()=>{nav.classList.toggle('solid',scrollY>40);});
+
+/* ════ TV REMOTE ════ */
+document.addEventListener('keydown',e=>{const tag=document.activeElement?.tagName.toLowerCase();if(tag==='input')return;if(e.key==='Escape'&&fsPlayer.classList.contains('show'))exitFullscreen();});
+
+/* ════ INIT ════ */
+function init(){
+ driveDot.className='drive-dot'+(relayReady()?' ok':'');
+ // 1) INSTANT paint from local cache — no network wait.
+ const cached=loadCache();
+ heroLoading.style.display='none';
+ if(cached){rebuild();}     // shows category grid immediately
+ else{render();}            // empty-state UI
+
+ // 2) Background sync (does NOT block the UI).
+ setTimeout(async()=>{
+  pingDrive();
+  let gotDrive=false;
+  if(relayReady()){gotDrive=await loadFromDrive();}   // refresh from Drive if available
+  // 3) Only preload presets if we still have nothing at all.
+  if(!APP.chs.length){
+   const jobs=PRESETS.map(p=>connectPreset(p,true).catch(()=>null));
+   await Promise.allSettled(jobs);
+   rebuild();
+   saveToDrive(false);
+  } else if(gotDrive){
+   toast('Synced from Drive','ok');
+  }
+ },50);
+}
+init();
+</script>
+</body>
+</html>

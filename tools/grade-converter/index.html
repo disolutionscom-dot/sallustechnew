@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> Assessment Analytics & Grade Reporting System</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#EDF1F7;--surface:#FFF;--s2:#F7F9FC;--s3:#EFF3F9;
+  --border:#DDE4EE;--border2:#C4CEDC;
+  --text:#0C1A2E;--t2:#3D4F66;--t3:#8596AA;
+  --blue:#1151A3;--blue2:#0D3F84;--blue-lt:#EBF2FF;--blue-md:#AABEDD;
+  --teal:#0A7B8C;--teal-lt:#E0F5F7;
+  --green:#15723A;--green-lt:#D8F5E5;
+  --red:#B01C1C;--red-lt:#FEECEC;
+  --amber:#9B6200;--amber-lt:#FEF3D0;
+  --sh:0 1px 4px rgba(12,26,46,.08),0 1px 2px rgba(12,26,46,.05);
+  --sh2:0 6px 24px rgba(12,26,46,.1);
+  --r:10px;--rs:7px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+
+/* ── Topbar ── */
+.topbar{background:linear-gradient(135deg,#0D2E6E 0%,#1151A3 60%,#1565C0 100%);
+  padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(13,46,110,.35)}
+.brand{display:flex;align-items:center;gap:13px}
+.brand-logo{width:44px;height:44px;border-radius:8px;overflow:hidden;
+  background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.brand-logo img{width:100%;height:100%;object-fit:contain}
+.brand-logo .fallback{font-weight:900;font-size:20px;color:#1151A3;display:none}
+.brand-text{}
+.brand-text h1{font-size:.95rem;font-weight:700;color:#fff;letter-spacing:-.2px;line-height:1.2}
+.brand-text p{font-size:.68rem;color:rgba(255,255,255,.65);margin-top:2px;letter-spacing:.2px}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.hdr-pill{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);
+  padding:5px 13px;border-radius:20px;font-size:.67rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+
+/* ── Shell ── */
+.shell{max-width:1300px;margin:0 auto;padding:22px 24px 60px}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.card+.card{margin-top:16px}
+.ch{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;background:var(--s2);border-bottom:1px solid var(--border)}
+.ch-l{display:flex;align-items:center;gap:9px}
+.ci{width:28px;height:28px;border-radius:6px;background:var(--blue-lt);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.ch h2{font-size:.86rem;font-weight:700}
+.ch p{font-size:.7rem;color:var(--t3);margin-top:1px}
+.cb{padding:18px}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rs);
+  border:none;font-family:'Outfit',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;
+  transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(17,81,163,.3)}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn-pdf{background:linear-gradient(135deg,#C0392B,#E74C3C);color:#fff}
+.btn-pdf:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 4px 14px rgba(192,57,43,.35)}
+.btn-outline{background:transparent;border:1.5px solid var(--border2);color:var(--t2)}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-lt)}
+.btn-ghost{background:transparent;color:var(--t3);border:1px solid transparent}
+.btn-ghost:hover{color:var(--text);background:var(--s3);border-color:var(--border)}
+.btn-sm{padding:5px 11px;font-size:.74rem}
+.btn-lg{padding:11px 26px;font-size:.9rem}
+.bgroup{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* ── Upload zone ── */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--rs);padding:26px 20px;
+  text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--s2)}
+.upload-zone.drag{border-color:var(--blue);background:var(--blue-lt)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2}
+.upload-zone .uz-icon{font-size:1.8rem;margin-bottom:7px}
+.upload-zone h3{font-size:.88rem;font-weight:700;margin-bottom:3px}
+.upload-zone p{font-size:.73rem;color:var(--t3)}
+.fmt-chips{display:flex;gap:5px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.fmt-chip{padding:2px 8px;border-radius:10px;background:var(--s3);border:1px solid var(--border);
+  color:var(--t2);font-size:.66rem;font-weight:700}
+
+/* ── Paste box ── */
+.paste-box{border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;background:var(--s2)}
+.paste-hd{padding:8px 12px;background:var(--s3);border-bottom:1px solid var(--border);
+  font-size:.67rem;font-weight:700;color:var(--t2);letter-spacing:.4px;text-transform:uppercase}
+.paste-box textarea{width:100%;padding:12px;border:none;outline:none;resize:vertical;
+  background:var(--s2);color:var(--text);font-family:'JetBrains Mono',monospace;
+  font-size:.77rem;line-height:1.7;min-height:118px}
+.paste-box textarea::placeholder{color:var(--t3)}
+
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.input-grid{grid-template-columns:1fr}}
+
+/* ── Status ── */
+.status{display:flex;align-items:flex-start;gap:8px;padding:10px 13px;border-radius:var(--rs);
+  font-size:.79rem;line-height:1.5;animation:fadeIn .25s ease}
+.st-ok  {background:var(--green-lt);border:1px solid #86EFAC;color:var(--green)}
+.st-warn{background:var(--amber-lt);border:1px solid #FDE68A;color:var(--amber)}
+.st-err {background:var(--red-lt);  border:1px solid #FCA5A5;color:var(--red)}
+.st-info{background:var(--blue-lt); border:1px solid var(--blue-md);color:var(--blue)}
+
+/* ── Mapper ── */
+.mapper{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);overflow:hidden}
+.mapper-hd{padding:10px 16px;border-bottom:1px solid var(--border);font-size:.71rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--t2);background:var(--s3);
+  display:flex;align-items:center;justify-content:space-between}
+.mapper-body{padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+@media(max-width:720px){.mapper-body{grid-template-columns:1fr}}
+
+.mfield{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rs);overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.mfield.active-blue {border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-lt)}
+.mfield.active-teal {border-color:var(--teal); box-shadow:0 0 0 3px var(--teal-lt)}
+.mfield.active-green{border-color:var(--green);box-shadow:0 0 0 3px var(--green-lt)}
+.mf-hd{padding:9px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--s2)}
+.mf-ico{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.ico-reg  {background:#EDE9FE;color:#6D28D9}
+.ico-name {background:var(--teal-lt);color:var(--teal)}
+.ico-score{background:var(--green-lt);color:var(--green)}
+.mf-hd-t{flex:1}.mf-title{font-size:.77rem;font-weight:700}
+.mf-req{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.req-y{color:var(--red)}.req-n{color:var(--t3)}
+.mf-body{padding:11px 12px}
+.mf-sel{width:100%;padding:7px 26px 7px 9px;border-radius:var(--rs);border:1.5px solid var(--border2);
+  background:var(--surface);font-family:'Outfit',sans-serif;font-size:.79rem;color:var(--text);
+  outline:none;cursor:pointer;appearance:none;transition:border-color .18s;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238596AA' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center}
+.mf-sel:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt)}
+.mf-sample{margin-top:8px;padding:5px 9px;border-radius:5px;background:var(--bg);
+  border:1px solid var(--border);font-family:'JetBrains Mono',monospace;
+  font-size:.71rem;color:var(--t2);min-height:24px;word-break:break-all;line-height:1.4}
+.mf-sample .slbl{display:block;font-size:.6rem;color:var(--t3);font-family:'Outfit',sans-serif;margin-bottom:2px}
+
+/* ── Preview table ── */
+.preview-wrap{overflow:auto;border:1px solid var(--border);border-radius:var(--rs);max-height:185px;margin-bottom:14px}
+.ptbl{width:100%;border-collapse:collapse;font-size:.75rem}
+.ptbl th{background:var(--blue);color:#fff;padding:8px 12px;text-align:left;font-weight:600;
+  position:sticky;top:0;white-space:nowrap;font-size:.67rem;text-transform:uppercase;letter-spacing:.4px}
+.ptbl td{padding:7px 12px;border-bottom:1px solid var(--border);white-space:nowrap;
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.ptbl tbody tr:hover{background:var(--blue-lt)}
+
+/* ── Main grid ── */
+.main-grid{display:grid;grid-template-columns:1fr 300px;gap:18px;margin-top:18px;align-items:start}
+@media(max-width:900px){.main-grid{grid-template-columns:1fr}}
+
+/* ── Stats strip ── */
+.stats-strip{display:flex;gap:9px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--s2)}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:9px 14px;display:flex;flex-direction:column;align-items:center;min-width:70px}
+.stat .v{font-size:1.2rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--blue)}
+.stat .l{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);margin-top:1px}
+
+/* ── Toolbar ── */
+.toolbar{display:flex;gap:8px;padding:11px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center}
+.sbox{display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:var(--rs);
+  border:1.5px solid var(--border2);background:var(--surface);flex:1;min-width:160px;transition:border-color .2s}
+.sbox:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt)}
+.sbox input{border:none;outline:none;font-family:'Outfit',sans-serif;font-size:.8rem;color:var(--text);background:transparent;width:100%}
+.sbox input::placeholder{color:var(--t3)}
+.fsel{padding:7px 24px 7px 9px;border-radius:var(--rs);border:1.5px solid var(--border2);background:var(--surface);
+  font-family:'Outfit',sans-serif;font-size:.79rem;color:var(--text);outline:none;cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238596AA' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 7px center}
+.fsel:focus{border-color:var(--blue)}
+.rcount{font-size:.73rem;color:var(--t3);white-space:nowrap;margin-left:auto}
+
+/* ── Result table ── */
+.rt-wrap{overflow:auto;max-height:500px}
+table.rt{width:100%;border-collapse:collapse;font-size:.79rem}
+table.rt thead{position:sticky;top:0;z-index:2}
+table.rt th{background:var(--s2);border-bottom:2px solid var(--border);padding:9px 14px;
+  text-align:left;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--t2);white-space:nowrap}
+table.rt td{padding:8px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.rt tbody tr:hover{background:var(--blue-lt)}
+.td-mono{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--t2)}
+.td-score{font-family:'JetBrains Mono',monospace;font-weight:600}
+.gpill{display:inline-flex;align-items:center;justify-content:center;
+  padding:2px 11px;border-radius:20px;font-weight:700;font-size:.74rem;letter-spacing:.3px}
+
+/* ── Scale editor ── */
+.scale-row{display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:var(--rs);
+  border:1px solid var(--border);margin-bottom:7px;background:var(--s2)}
+.gbadge{width:40px;height:30px;border-radius:6px;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:.8rem;color:#fff;flex-shrink:0}
+.si{flex:1}.si .sg{font-size:.75rem;font-weight:700}.si .sr{font-size:.66rem;color:var(--t3)}
+.snum{width:60px;padding:5px 7px;border-radius:5px;border:1.5px solid #FCD34D;
+  background:#FFFBEB;font-family:'JetBrains Mono',monospace;font-size:.83rem;
+  font-weight:600;color:#92400E;text-align:center;outline:none;transition:border-color .2s}
+.snum:focus{border-color:#F59E0B;box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+.snum:disabled{background:var(--bg);border-color:var(--border);color:var(--t3)}
+
+/* ── Charts ── */
+.chart-container{position:relative;width:100%;margin-bottom:14px}
+
+/* ── Section lbl ── */
+.slbl-hd{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:var(--t3);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.slbl-hd::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── PDF spinner overlay ── */
+.pdf-overlay{display:none;position:fixed;inset:0;background:rgba(12,26,46,.55);
+  z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.pdf-overlay.show{display:flex}
+.pdf-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);
+  border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+.pdf-overlay p{color:#fff;font-weight:600;font-size:.9rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fadein{animation:fadeIn .3s ease both}
+
+/* ── Empty state ── */
+.empty{text-align:center;padding:52px 20px}
+.empty .ei{font-size:2.4rem;margin-bottom:10px;opacity:.35}
+.empty h3{font-size:.9rem;font-weight:700;color:var(--t2);margin-bottom:5px}
+.empty p{font-size:.77rem;color:var(--t3)}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ── hidden canvases for PDF ── */
+#pdfBarCanvas,#pdfPieCanvas{display:none}
+</style>
+</head>
+<body>
+
+<!-- PDF Loading Overlay -->
+<div class="pdf-overlay" id="pdfOverlay">
+  <div class="pdf-spinner"></div>
+  <p>Generating PDF Report…</p>
+</div>
+
+<!-- ── Topbar ── -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo" id="logoWrap">
+      <img id="logoImg" src=""
+           alt=“University" crossorigin="anonymous"
+           onerror="this.style.display='none';document.querySelector('.fallback').style.display='block'">
+      <span class="fallback">G</span>
+    </div>
+    <div class="brand-text">
+      <h1>Assessment Analytics &amp; Grade Reporting System</h1>
+      <p>University Name</p>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-pill">Academic Tool</div>
+  </div>
+</div>
+
+<!-- Hidden canvases for PDF chart rendering -->
+<canvas id="pdfBarCanvas" width="900" height="400"></canvas>
+<canvas id="pdfPieCanvas" width="500" height="500"></canvas>
+
+<div class="shell">
+
+  <!-- ══ IMPORT CARD ══ -->
+  <div class="card fadein">
+    <div class="ch">
+      <div class="ch-l">
+        <div class="ci">📥</div>
+        <div>
+          <h2>Import Student Data</h2>
+          <p>Upload Excel / CSV or paste directly from Moodle, Excel, Google Sheets</p>
+        </div>
+      </div>
+      <div class="bgroup">
+        <button class="btn btn-ghost btn-sm" onclick="loadSample()">Load Sample</button>
+        <button class="btn btn-ghost btn-sm" onclick="hardReset()">✕ Reset</button>
+      </div>
+    </div>
+    <div class="cb">
+      <div class="input-grid" style="margin-bottom:14px">
+        <div>
+          <div class="slbl-hd">Upload File</div>
+          <div class="upload-zone" id="dropZone">
+            <input type="file" accept=".xlsx,.xls,.csv,.txt,.tsv" id="fileInput" onchange="handleFile(event)">
+            <div class="uz-icon">📂</div>
+            <h3>Drop file or click to browse</h3>
+            <p>Excel, CSV, TSV — Moodle exports supported</p>
+            <div class="fmt-chips">
+              <span class="fmt-chip">XLSX</span><span class="fmt-chip">XLS</span>
+              <span class="fmt-chip">CSV</span><span class="fmt-chip">TSV</span><span class="fmt-chip">TXT</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="slbl-hd">Paste Data</div>
+          <div class="paste-box">
+            <div class="paste-hd">📋 Paste from Moodle / Excel / Google Sheets</div>
+            <textarea id="pasteArea" placeholder="Paste any tabular data here…&#10;&#10;All formats auto-detected:&#10;  2025ss007  Ahmed  87&#10;  2025nn005  Sara   73&#10;&#10;or Moodle export with single-quoted values"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:9px">
+            <button class="btn btn-primary" onclick="parseAndMap()">⚡ Parse Data</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pasteArea').value='';clearStatus()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="statusBox" style="margin-bottom:12px"></div>
+
+      <!-- Mapper -->
+      <div id="mapperSection" style="display:none">
+        <div class="slbl-hd">Column Mapping</div>
+        <div class="preview-wrap" id="previewWrap"></div>
+        <div class="mapper">
+          <div class="mapper-hd">
+            <span>Map fields — auto-detected from your data</span>
+            <span id="rowCountBadge" style="background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-md);padding:2px 10px;border-radius:12px;font-size:.67rem;font-weight:700">0 rows</span>
+          </div>
+          <div class="mapper-body">
+            <div class="mfield" id="mf-reg">
+              <div class="mf-hd"><div class="mf-ico ico-reg">🪪</div>
+                <div class="mf-hd-t"><div class="mf-title">Registration Number</div><div class="mf-req req-n">Optional</div></div>
+              </div>
+              <div class="mf-body">
+                <select class="mf-sel" id="sel-reg" onchange="onMapChange()"><option value="">— Not mapped —</option></select>
+                <div class="mf-sample" id="smp-reg"><span class="slbl">Sample value</span>—</div>
+              </div>
+            </div>
+            <div class="mfield" id="mf-name">
+              <div class="mf-hd"><div class="mf-ico ico-name">👤</div>
+                <div class="mf-hd-t"><div class="mf-title">Student Name</div><div class="mf-req req-n">Optional</div></div>
+              </div>
+              <div class="mf-body">
+                <select class="mf-sel" id="sel-name" onchange="onMapChange()"><option value="">— Not mapped —</option></select>
+                <div class="mf-sample" id="smp-name"><span class="slbl">Sample value</span>—</div>
+              </div>
+            </div>
+            <div class="mfield" id="mf-score">
+              <div class="mf-hd"><div class="mf-ico ico-score">🎯</div>
+                <div class="mf-hd-t"><div class="mf-title">Score / Marks</div><div class="mf-req req-y">Required</div></div>
+              </div>
+              <div class="mf-body">
+                <select class="mf-sel" id="sel-score" onchange="onMapChange()"><option value="">— Select column —</option></select>
+                <div class="mf-sample" id="smp-score"><span class="slbl">Sample value</span>—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="combineRow" style="display:none;margin-top:10px;padding:10px 14px;background:var(--blue-lt);border:1px solid var(--blue-md);border-radius:var(--rs);font-size:.78rem;color:var(--blue)">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+            <input type="checkbox" id="combineName" checked onchange="onMapChange()" style="width:15px;height:15px;accent-color:var(--blue)">
+            Combine <strong id="combineDesc">First name + Surname</strong> into full name
+          </label>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-success btn-lg" id="calcBtn" onclick="calculateGrades()" disabled>✓ Calculate Grades</button>
+          <span id="mapStatus" style="font-size:.76rem;color:var(--t3)"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RESULTS + SIDEBAR ══ -->
+  <div class="main-grid" id="resultsSection" style="display:none">
+
+    <!-- Results table -->
+    <div>
+      <div class="card fadein">
+        <div class="ch">
+          <div class="ch-l">
+            <div class="ci">📋</div>
+            <div><h2>Grade Results</h2><p id="resultSub">—</p></div>
+          </div>
+          <div class="bgroup">
+            <button class="btn btn-pdf" onclick="generatePDF()">📄 Download PDF Report</button>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ CSV</button>
+            <button class="btn btn-outline btn-sm" onclick="copyTSV()" id="copyBtn">📋 Copy</button>
+          </div>
+        </div>
+        <div class="stats-strip" id="statsStrip"></div>
+        <div class="toolbar">
+          <div class="sbox">
+            <span style="color:var(--t3);font-size:.9rem">🔍</span>
+            <input type="text" id="searchBox" placeholder="Search name or registration number…" oninput="filterTable()">
+          </div>
+          <select class="fsel" id="gradeFilter" onchange="filterTable()"><option value="">All Grades</option></select>
+          <select class="fsel" id="sortSel" onchange="sortTable()">
+            <option value="">Sort: Default</option>
+            <option value="name-asc">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+            <option value="score-desc">Score High–Low</option>
+            <option value="score-asc">Score Low–High</option>
+            <option value="grade-asc">Grade A–F</option>
+          </select>
+          <span class="rcount" id="rowCount">0 students</span>
+        </div>
+        <div class="rt-wrap" id="tableWrap">
+          <div class="empty"><div class="ei">📊</div><h3>No results yet</h3></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+      <!-- Scale editor -->
+      <div class="card fadein" style="margin-bottom:16px">
+        <div class="ch">
+          <div class="ch-l"><div class="ci">⚙️</div><div><h2>Grading Scale</h2><p>Edit yellow fields</p></div></div>
+          <button class="btn btn-ghost btn-sm" onclick="resetScale()">↺ Reset</button>
+        </div>
+        <div class="cb">
+          <div id="scaleEditor"></div>
+          <div style="font-size:.71rem;padding:8px 10px;background:var(--amber-lt);border:1px solid #FDE68A;border-radius:6px;color:var(--amber);margin-top:10px">
+            ✏️ Edit min-score (yellow) — grades update instantly.
+          </div>
+        </div>
+      </div>
+
+      <!-- Bar chart -->
+      <div class="card fadein" style="margin-bottom:16px">
+        <div class="ch">
+          <div class="ch-l"><div class="ci">📊</div><div><h2>Grade Distribution</h2></div></div>
+          <span id="totalCount" style="font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;color:var(--blue)"></span>
+        </div>
+        <div class="cb">
+          <div class="chart-container" style="height:200px">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pie chart -->
+      <div class="card fadein">
+        <div class="ch">
+          <div class="ch-l"><div class="ci">🥧</div><div><h2>Grade Breakdown</h2></div></div>
+        </div>
+        <div class="cb">
+          <div class="chart-container" style="height:200px">
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /shell -->
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  SCALE
+// ══════════════════════════════════════════════════════════
+const SCALE_DEF = [
+  {g:"A",  min:90, c:"#15803D", bg:"#DCFCE7", tc:"#166534"},
+  {g:"B+", min:85, c:"#059669", bg:"#D1FAE5", tc:"#065F46"},
+  {g:"B",  min:80, c:"#0D9488", bg:"#CCFBF1", tc:"#134E4A"},
+  {g:"C+", min:75, c:"#CA8A04", bg:"#FEF9C3", tc:"#854D0E"},
+  {g:"C",  min:70, c:"#D97706", bg:"#FEF3C7", tc:"#92400E"},
+  {g:"D+", min:65, c:"#EA580C", bg:"#FFEDD5", tc:"#9A3412"},
+  {g:"F",  min:0,  c:"#DC2626", bg:"#FEE2E2", tc:"#991B1B"},
+];
+let scale = JSON.parse(JSON.stringify(SCALE_DEF));
+let barChartInst = null, pieChartInst = null;
+
+function getGrade(s){ const sorted=[...scale].sort((a,b)=>b.min-a.min); for(const x of sorted)if(s>=x.min)return x; return scale[scale.length-1]; }
+
+function buildScaleEditor(){
+  document.getElementById('scaleEditor').innerHTML = scale.map((s,i)=>{
+    const next=i>0?scale[i-1].min:101;
+    const rng=s.g==='F'?`< ${scale[i-1]?.min??65}`:`${s.min}–${next-1}`;
+    return `<div class="scale-row">
+      <div class="gbadge" style="background:${s.c}">${s.g}</div>
+      <div class="si"><div class="sg">${s.g}</div><div class="sr">${rng}</div></div>
+      <input class="snum" type="number" min="0" max="100" value="${s.min}"
+        ${s.g==='F'?'disabled':''}
+        oninput="scale[${i}].min=+this.value;buildScaleEditor();regrade()">
+    </div>`;
+  }).join('');
+}
+function resetScale(){ scale=JSON.parse(JSON.stringify(SCALE_DEF)); buildScaleEditor(); regrade(); }
+
+// ══════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════
+let rawHeaders=[],rawRows=[],students=[],filtered=[];
+
+// ══════════════════════════════════════════════════════════
+//  PARSING
+// ══════════════════════════════════════════════════════════
+function cleanCell(v){
+  if(v===null||v===undefined)return'';
+  let s=String(v).trim();
+  if(s.startsWith("'")&&s.endsWith("'")&&s.length>1)s=s.slice(1,-1).trim();
+  s=s.replace(/^["']|["']$/g,'').trim();
+  return s;
+}
+function isNumericScore(v){ const n=parseFloat(String(v).replace(/[%,\s]/g,'')); return !isNaN(n)&&n>=0&&n<=200; }
+
+function handleFile(e){
+  const f=e.target.files[0]; if(!f)return;
+  setStatus(`Reading "${f.name}"…`,'info');
+  const reader=new FileReader();
+  if(f.name.match(/\.xlsx?$/i)){
+    reader.onload=ev=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+        ingestAoA(aoa,f.name);
+      }catch(err){setStatus('Failed to read Excel: '+err.message,'err');}
+    };
+    reader.readAsArrayBuffer(f);
+  } else {
+    reader.onload=ev=>parseText(ev.target.result,f.name);
+    reader.readAsText(f);
+  }
+  e.target.value='';
+}
+
+function parseText(text,src){
+  text=text.replace(/^\uFEFF/,'');
+  const lines=text.split(/\r?\n/).map(l=>l.trimEnd()).filter(l=>l.trim()!=='');
+  if(!lines.length){setStatus('No data found.','err');return;}
+  const sample=lines.slice(0,8).join('\n');
+  const tc=(sample.match(/\t/g)||[]).length;
+  const cc=(sample.match(/,/g)||[]).length;
+  const sc=(sample.match(/;/g)||[]).length;
+  const pc=(sample.match(/\|/g)||[]).length;
+  let d='\t';
+  const best=Math.max(tc,cc,sc,pc);
+  if(best===tc)d='\t'; else if(best===cc)d=','; else if(best===sc)d=';'; else if(best===pc)d='|';
+  ingestAoA(lines.map(l=>parseCSVLine(l,d)),src||'pasted data');
+}
+
+function parseCSVLine(line,delim){
+  const res=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+    else if(c===delim&&!inQ){res.push(cur);cur='';}
+    else cur+=c;
+  }
+  res.push(cur);
+  return res;
+}
+
+function ingestAoA(aoa,source){
+  if(!aoa||!aoa.length){setStatus('No data detected.','err');return;}
+  const ncols=Math.max(...aoa.map(r=>r.length));
+  const firstRow=aoa[0].map(cleanCell);
+  const numInFirst=firstRow.filter(c=>c!==''&&isNumericScore(c)).length;
+  const hasHeader=firstRow.some(c=>c!=='')&&(numInFirst<firstRow.length*0.6);
+  let headers,dataRows;
+  if(hasHeader){headers=firstRow.map((h,i)=>h||`Column ${i+1}`);dataRows=aoa.slice(1);}
+  else{headers=Array.from({length:ncols},(_,i)=>`Column ${i+1}`);dataRows=aoa;}
+  rawHeaders=headers;
+  rawRows=dataRows.map(r=>{const p=[...r];while(p.length<headers.length)p.push('');return p.map(cleanCell);}).filter(r=>r.some(c=>c!==''));
+  if(!rawRows.length){setStatus('No data rows found.','err');return;}
+  setStatus(`✅ <strong>${rawRows.length} rows</strong> × <strong>${rawHeaders.length} columns</strong> detected from ${source}.`,'ok');
+  buildMapper();
+}
+
+// ══════════════════════════════════════════════════════════
+//  MAPPER
+// ══════════════════════════════════════════════════════════
+const REG_HDR  =/user|reg|id|roll|admission|banner|matric|student.?no|username/i;
+const NAME_HDR =/name|student|first|full|given|learner/i;
+const SURN_HDR =/sur|last|family/i;
+const SCORE_HDR=/score|grade|mark|total|result|point|percent|obtain|course/i;
+
+function buildMapper(){
+  document.getElementById('mapperSection').style.display='block';
+  document.getElementById('rowCountBadge').textContent=`${rawRows.length} rows`;
+  // Preview
+  const prev=rawRows.slice(0,5);
+  let h='<table class="ptbl"><thead><tr>';
+  rawHeaders.forEach((hdr,i)=>h+=`<th title="${hdr}">[${i}] ${hdr}</th>`);
+  h+='</tr></thead><tbody>';
+  prev.forEach(row=>{h+='<tr>';rawHeaders.forEach((_,i)=>h+=`<td>${row[i]||'<span style="color:var(--t3)">—</span>'}</td>`);h+='</tr>';});
+  h+='</tbody></table>';
+  document.getElementById('previewWrap').innerHTML=h;
+  // Selects
+  ['sel-reg','sel-name','sel-score'].forEach(id=>{
+    const sel=document.getElementById(id);
+    while(sel.options.length>1)sel.remove(1);
+    rawHeaders.forEach((hdr,i)=>sel.add(new Option(`[${i}] ${hdr}`,i)));
+  });
+  let aReg=-1,aFirst=-1,aLast=-1,aScore=-1;
+  rawHeaders.forEach((hd,i)=>{
+    if(REG_HDR.test(hd)  &&aReg  <0)aReg  =i;
+    if(SURN_HDR.test(hd) &&aLast <0)aLast =i;
+    else if(NAME_HDR.test(hd)&&aFirst<0)aFirst=i;
+    if(SCORE_HDR.test(hd)&&aScore<0)aScore=i;
+  });
+  if(aScore<0||aReg<0||aFirst<0){
+    rawHeaders.forEach((_,i)=>{
+      const vals=rawRows.slice(0,20).map(r=>r[i]).filter(v=>v!=='');
+      if(!vals.length)return;
+      const numC=vals.filter(v=>isNumericScore(v)&&parseFloat(v)<=100).length;
+      const regC=vals.filter(v=>/^\d{4}[a-z]+\d+$/i.test(v)).length;
+      const wrdC=vals.filter(v=>/[a-zA-Z]{3,}/.test(v)&&!/^\d/.test(v)).length;
+      if(aScore<0&&numC>=vals.length*.7&&i!==aReg)aScore=i;
+      if(aReg<0&&regC>=vals.length*.5)aReg=i;
+      if(aFirst<0&&wrdC>=vals.length*.7&&i!==aReg&&i!==aScore)aFirst=i;
+    });
+  }
+  const hasSep=aLast>=0&&aLast!==aFirst;
+  if(aReg  >=0)document.getElementById('sel-reg').value  =aReg;
+  if(aFirst>=0)document.getElementById('sel-name').value =aFirst;
+  if(aScore>=0)document.getElementById('sel-score').value=aScore;
+  if(hasSep){
+    document.getElementById('combineRow').style.display='block';
+    document.getElementById('combineRow').dataset.surnameIdx=aLast;
+    document.getElementById('combineDesc').textContent=`"${rawHeaders[aFirst]}" + "${rawHeaders[aLast]}"`;
+  } else {
+    document.getElementById('combineRow').style.display='none';
+  }
+  onMapChange();
+}
+
+function onMapChange(){
+  const ri=document.getElementById('sel-reg').value;
+  const ni=document.getElementById('sel-name').value;
+  const si=document.getElementById('sel-score').value;
+  const s0=rawRows[0]||[];
+  const setSmp=(el,idx)=>{const e=document.getElementById(el);const v=idx!==''?(s0[idx]||'—'):'—';e.innerHTML=`<span class="slbl">Sample value</span>${v}`;};
+  setSmp('smp-reg',ri);setSmp('smp-name',ni);setSmp('smp-score',si);
+  document.getElementById('mf-reg').className  ='mfield'+(ri!==''?' active-blue':'');
+  document.getElementById('mf-name').className ='mfield'+(ni!==''?' active-teal':'');
+  document.getElementById('mf-score').className='mfield'+(si!==''?' active-green':'');
+  const ok=si!=='';
+  document.getElementById('calcBtn').disabled=!ok;
+  document.getElementById('mapStatus').textContent=ok?(ri!==''?'✓ Reg, ':'')+(ni!==''?'✓ Name, ':'')+'✓ Score mapped':'Score column required';
+}
+
+function buildName(row,ni,ri){
+  const combEl=document.getElementById('combineRow');
+  const comb=combEl.style.display!=='none'&&document.getElementById('combineName').checked;
+  const sIdx=parseInt(combEl.dataset.surnameIdx);
+  let fn=ni!==''?(row[ni]||''):'';
+  let ln=comb&&!isNaN(sIdx)?(row[sIdx]||''):'';  
+  const rv=ri!==''?(row[ri]||''):'';
+  if(fn.toLowerCase()===rv.toLowerCase()&&ln){fn=ln;ln='';}
+  return[fn,ln].filter(Boolean).join(' ').replace(/\s+/g,' ').trim()||'—';
+}
+
+// ══════════════════════════════════════════════════════════
+//  CALCULATE
+// ══════════════════════════════════════════════════════════
+function calculateGrades(){
+  const ri=document.getElementById('sel-reg').value;
+  const ni=document.getElementById('sel-name').value;
+  const si=document.getElementById('sel-score').value;
+  if(si===''){setStatus('Please map the Score column first.','err');return;}
+  students=[];let skipped=0;
+  rawRows.forEach((row,idx)=>{
+    const score=parseFloat(String(row[si]).replace(/[%,\s]/g,''));
+    if(isNaN(score)){skipped++;return;}
+    students.push({reg:ri!==''?(row[ri]||''):'',name:ni!==''?buildName(row,ni,ri):`Student ${idx+1}`,score,go:getGrade(score)});
+  });
+  if(!students.length){setStatus('No valid scores found.','err');return;}
+  if(skipped>0)setStatus(`✅ ${students.length} graded. ${skipped} rows skipped (non-numeric score).`,'ok');
+  filtered=[...students];
+  document.getElementById('resultsSection').style.display='grid';
+  document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'});
+  buildGradeFilter();
+  renderAll();
+}
+
+function regrade(){
+  if(!students.length)return;
+  students=students.map(s=>({...s,go:getGrade(s.score)}));
+  filtered=students.filter(applyFilter);
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════════
+function renderAll(){renderStats();renderTable();renderCharts();}
+
+function renderStats(){
+  const scores=students.map(s=>s.score);
+  const avg=(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1);
+  const hi=Math.max(...scores).toFixed(1);
+  const lo=Math.min(...scores).toFixed(1);
+  const pass=students.filter(s=>s.go.g!=='F').length;
+  const pct=((pass/students.length)*100).toFixed(1);
+  document.getElementById('resultSub').textContent=`${students.length} students graded`;
+  document.getElementById('statsStrip').innerHTML=`
+    <div class="stat"><div class="v">${students.length}</div><div class="l">Total</div></div>
+    <div class="stat"><div class="v">${avg}</div><div class="l">Average</div></div>
+    <div class="stat"><div class="v">${hi}</div><div class="l">Highest</div></div>
+    <div class="stat"><div class="v">${lo}</div><div class="l">Lowest</div></div>
+    <div class="stat"><div class="v">${pass}</div><div class="l">Passed</div></div>
+    <div class="stat"><div class="v" style="color:${pct>=50?'var(--green)':'var(--red)'}">${pct}%</div><div class="l">Pass Rate</div></div>`;
+  document.getElementById('totalCount').textContent=`${students.length}`;
+}
+
+function renderCharts(){
+  const cnt={};scale.forEach(s=>cnt[s.g]=0);
+  students.forEach(s=>cnt[s.go.g]=(cnt[s.go.g]||0)+1);
+  const labels=scale.map(s=>s.g);
+  const data=scale.map(s=>cnt[s.g]);
+  const colors=scale.map(s=>s.c);
+  // Bar chart
+  if(barChartInst)barChartInst.destroy();
+  barChartInst=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Students',data,backgroundColor:colors,borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} students`}}},
+      scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,.06)'}},
+              x:{grid:{display:false}}}}
+  });
+  // Pie chart
+  const nonZero=scale.filter(s=>cnt[s.g]>0);
+  if(pieChartInst)pieChartInst.destroy();
+  pieChartInst=new Chart(document.getElementById('pieChart'),{
+    type:'doughnut',
+    data:{labels:nonZero.map(s=>s.g),datasets:[{data:nonZero.map(s=>cnt[s.g]),backgroundColor:nonZero.map(s=>s.c),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12,padding:10,font:{family:'Outfit',size:11}}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${((ctx.parsed/students.length)*100).toFixed(1)}%)`}}}}
+  });
+}
+
+function buildGradeFilter(){
+  const sel=document.getElementById('gradeFilter');
+  sel.innerHTML='<option value="">All Grades</option>';
+  scale.forEach(s=>sel.add(new Option(s.g,s.g)));
+}
+
+function applyFilter(s){
+  const q=document.getElementById('searchBox').value.toLowerCase();
+  const gv=document.getElementById('gradeFilter').value;
+  return(!q||(s.name.toLowerCase().includes(q)||(s.reg||'').toLowerCase().includes(q)))&&(!gv||s.go.g===gv);
+}
+
+function filterTable(){filtered=students.filter(applyFilter);renderTable();}
+
+function sortTable(){
+  const val=document.getElementById('sortSel').value;
+  if(!val){filtered=students.filter(applyFilter);renderTable();return;}
+  const[col,dir]=val.split('-');const d=dir==='asc'?1:-1;
+  filtered.sort((a,b)=>{
+    if(col==='name')return d*a.name.localeCompare(b.name);
+    if(col==='score')return d*(a.score-b.score);
+    if(col==='grade'){const gi=g=>scale.findIndex(s=>s.g===g);return d*(gi(a.go.g)-gi(b.go.g));}
+    return 0;
+  });
+  renderTable();
+}
+
+function renderTable(){
+  const wrap=document.getElementById('tableWrap');
+  const hasReg=students.some(s=>s.reg);
+  const hasNm=students.some(s=>s.name&&s.name!=='—');
+  document.getElementById('rowCount').textContent=`${filtered.length} of ${students.length} students`;
+  if(!filtered.length){wrap.innerHTML=`<div class="empty"><div class="ei">🔍</div><h3>No results</h3></div>`;return;}
+  let html=`<table class="rt"><thead><tr><th style="width:42px">#</th>${hasReg?'<th>Reg Number</th>':''}${hasNm?'<th>Student Name</th>':''}<th>Score</th><th>Grade</th></tr></thead><tbody>`;
+  html+=filtered.map((s,i)=>`<tr>
+    <td class="td-mono" style="color:var(--t3)">${i+1}</td>
+    ${hasReg?`<td class="td-mono">${s.reg||'—'}</td>`:''}
+    ${hasNm?`<td style="font-weight:500">${s.name}</td>`:''}
+    <td class="td-score">${s.score.toFixed(2)}</td>
+    <td><span class="gpill" style="background:${s.go.bg};color:${s.go.tc}">${s.go.g}</span></td>
+  </tr>`).join('');
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════
+//  PDF GENERATION
+// ══════════════════════════════════════════════════════════
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+  return[r,g,b];
+}
+
+async function generatePDF(){
+  if(!students.length){alert('No data to export.');return;}
+  document.getElementById('pdfOverlay').classList.add('show');
+  await new Promise(r=>setTimeout(r,80));
+
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF('p','mm','a4');
+    const PW=210,PH=297,M=14,CW=PW-2*M;
+    let y=0;
+
+    // ── Load logo ──────────────────────────────────────────
+    let logoData=null;
+    try{
+      const logoEl=document.getElementById('logoImg');
+      if(logoEl&&logoEl.naturalWidth>0){
+        const c=document.createElement('canvas');
+        c.width=logoEl.naturalWidth;c.height=logoEl.naturalHeight;
+        c.getContext('2d').drawImage(logoEl,0,0);
+        logoData=c.toDataURL('image/png');
+      }
+    }catch(e){}
+
+    // ── PAGE 1 HEADER ──────────────────────────────────────
+    // Navy gradient header bar
+    doc.setFillColor(13,46,110);
+    doc.rect(0,0,PW,38,'F');
+    doc.setFillColor(17,81,163);
+    doc.rect(0,32,PW,6,'F');
+
+    // Logo
+    if(logoData){
+      try{doc.addImage(logoData,'PNG',M,5,28,28);}catch(e){}
+    } else {
+      doc.setFillColor(255,255,255);
+      doc.roundedRect(M,6,26,26,3,3,'F');
+      doc.setTextColor(17,81,163);
+      doc.setFontSize(16);doc.setFont('helvetica','bold');
+      doc.text('G',M+13,24,{align:'center'});
+    }
+
+    // University name
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(13);doc.setFont('helvetica','bold');
+    doc.text('University',M+32,14);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.setTextColor(180,200,240);
+    doc.text('E-Learning Center',M+32,20);
+    doc.setFontSize(9.5);doc.setFont('helvetica','bold');
+    doc.setTextColor(255,255,255);
+    doc.text('Assessment Analytics & Grade Reporting System',M+32,27.5);
+
+    y=46;
+
+    // ── Report meta ────────────────────────────────────────
+    const now=new Date();
+    const dateStr=now.toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+    const timeStr=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+    doc.setFillColor(235,242,255);
+    doc.roundedRect(M,y,CW,18,2,2,'F');
+    doc.setDrawColor(170,190,221);doc.setLineWidth(.3);
+    doc.roundedRect(M,y,CW,18,2,2,'S');
+
+    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(17,81,163);
+    doc.text('ACADEMIC PERFORMANCE REPORT',M+6,y+7);
+    doc.setFont('helvetica','normal');doc.setTextColor(61,79,102);
+    doc.text(`Generated: ${dateStr} at ${timeStr}`,M+6,y+13);
+    doc.text(`Total Students: ${students.length}`,PW-M-2,y+7,{align:'right'});
+    const scores=students.map(s=>s.score);
+    doc.text(`Average Score: ${(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1)}`,PW-M-2,y+13,{align:'right'});
+    y+=24;
+
+    // ── Summary stats boxes ────────────────────────────────
+    doc.setFontSize(7.5);doc.setFont('helvetica','bold');
+    doc.setTextColor(133,150,170);doc.text('SUMMARY STATISTICS',M,y);
+    y+=4;
+
+    const pass=students.filter(s=>s.go.g!=='F').length;
+    const pct=((pass/students.length)*100).toFixed(1);
+    const statBoxes=[
+      {label:'Total Students',   val:String(students.length),      color:[17,81,163]},
+      {label:'Average Score',    val:(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1), color:[13,114,58]},
+      {label:'Highest Score',    val:Math.max(...scores).toFixed(1),color:[9,123,140]},
+      {label:'Lowest Score',     val:Math.min(...scores).toFixed(1),color:[176,28,28]},
+      {label:'Pass Rate',        val:pct+'%',                       color:[202,138,4]},
+    ];
+    const bw=(CW-4*2)/5,bh=18;
+    statBoxes.forEach((b,i)=>{
+      const bx=M+i*(bw+2);
+      doc.setFillColor(...b.color);
+      doc.roundedRect(bx,y,bw,bh,2,2,'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold');doc.setFontSize(12);
+      doc.text(b.val,bx+bw/2,y+10.5,{align:'center'});
+      doc.setFont('helvetica','normal');doc.setFontSize(6.5);
+      doc.setTextColor(220,235,255);
+      doc.text(b.label,bx+bw/2,y+15.5,{align:'center'});
+    });
+    y+=24;
+
+    // ── Grade Distribution Bar Chart ───────────────────────
+    doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(133,150,170);
+    doc.text('GRADE DISTRIBUTION',M,y);y+=4;
+
+    // Draw bar chart manually
+    const cnt={};scale.forEach(s=>cnt[s.g]=0);
+    students.forEach(s=>cnt[s.go.g]=(cnt[s.go.g]||0)+1);
+    const maxCnt=Math.max(...Object.values(cnt),1);
+    const chartH=48,chartX=M,chartY=y;
+    const barW=(CW/scale.length)-3;
+
+    // Grid lines
+    doc.setDrawColor(220,228,238);doc.setLineWidth(.2);
+    for(let g=0;g<=4;g++){
+      const lineY=chartY+chartH-(g/4)*chartH;
+      doc.line(chartX,lineY,chartX+CW,lineY);
+      doc.setFontSize(5.5);doc.setFont('helvetica','normal');doc.setTextColor(180,180,180);
+      const val=Math.round((g/4)*maxCnt);
+      doc.text(String(val),chartX-1,lineY+1,{align:'right'});
+    }
+
+    scale.forEach((s,i)=>{
+      const count=cnt[s.g]||0;
+      const barH=count>0?(count/maxCnt)*chartH:1;
+      const bx=chartX+i*(barW+3);
+      const by=chartY+chartH-barH;
+      const[r,g2,b]=hexToRgb(s.c);
+      doc.setFillColor(r,g2,b);
+      doc.roundedRect(bx,by,barW,barH,1,1,'F');
+      // Count on top
+      if(count>0){
+        doc.setFontSize(6.5);doc.setFont('helvetica','bold');doc.setTextColor(r,g2,b);
+        doc.text(String(count),bx+barW/2,by-1.5,{align:'center'});
+      }
+      // Grade label bottom
+      doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(60,79,102);
+      doc.text(s.g,bx+barW/2,chartY+chartH+5,{align:'center'});
+      // Pct
+      if(count>0){
+        doc.setFontSize(5.5);doc.setFont('helvetica','normal');doc.setTextColor(140,150,165);
+        doc.text(`${((count/students.length)*100).toFixed(0)}%`,bx+barW/2,chartY+chartH+9,{align:'center'});
+      }
+    });
+
+    y=chartY+chartH+14;
+
+    // ── Pie / donut visualization ──────────────────────────
+    // Draw compact legend + pie simulation (donut slices)
+    doc.setFontSize(7.5);doc.setFont('helvetica','bold');doc.setTextColor(133,150,170);
+    doc.text('GRADE BREAKDOWN',M,y);y+=4;
+
+    // Draw pie from Chart.js canvas
+    try{
+      const pc=document.getElementById('pieChart');
+      if(pc&&pieChartInst){
+        const pieImg=pc.toDataURL('image/png');
+        doc.addImage(pieImg,'PNG',M,y,55,55);
+      }
+    }catch(e){}
+
+    // Legend table beside pie
+    const lx=M+60,lw=CW-60;
+    let ly=y+4;
+    scale.forEach(s=>{
+      if(cnt[s.g]===0)return;
+      const[r,g2,b]=hexToRgb(s.c);
+      doc.setFillColor(r,g2,b);
+      doc.roundedRect(lx,ly,3,3,0.5,0.5,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(12,26,46);
+      doc.text(s.g,lx+5,ly+3);
+      doc.setFont('helvetica','normal');doc.setTextColor(61,79,102);
+      const pctStr=`${cnt[s.g]} students (${((cnt[s.g]/students.length)*100).toFixed(1)}%)`;
+      doc.text(pctStr,lx+13,ly+3);
+      ly+=6;
+    });
+
+    y+=60;
+
+    // ── PAGE 2: Full student roster ────────────────────────
+    doc.addPage();
+
+    // Page 2 header strip
+    doc.setFillColor(13,46,110);doc.rect(0,0,PW,18,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(10);
+    doc.text('COMPLETE STUDENT GRADE ROSTER',M,11);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(180,200,240);
+    const exportList=filtered.length?filtered:students;
+    const isSorted=document.getElementById('sortSel').value!=='';
+    const isFiltered=document.getElementById('searchBox').value||document.getElementById('gradeFilter').value;
+    const listLabel=exportList.length+(isSorted||isFiltered?` of ${students.length} (sorted/filtered)`:'');
+    doc.text(`${listLabel} students  ·  ${dateStr}`,PW-M,11,{align:'right'});
+
+    // AutoTable
+    const hasReg=students.some(s=>s.reg);
+    const hasNm=students.some(s=>s.name&&s.name!=='—');
+    const cols=[];
+    cols.push({header:'#',dataKey:'idx'});
+    if(hasReg)cols.push({header:'Registration No.',dataKey:'reg'});
+    if(hasNm) cols.push({header:'Student Name',dataKey:'name'});
+    cols.push({header:'Score',dataKey:'score'});
+    cols.push({header:'Grade',dataKey:'grade'});
+
+    const tableData=(filtered.length?filtered:students).map((s,i)=>{
+      const row={idx:i+1,score:s.score.toFixed(2),grade:s.go.g};
+      if(hasReg)row.reg=s.reg||'—';
+      if(hasNm) row.name=s.name;
+      return row;
+    });
+
+    doc.autoTable({
+      startY:22,margin:{left:M,right:M},
+      columns:cols,
+      body:tableData,
+      headStyles:{fillColor:[17,81,163],textColor:255,fontStyle:'bold',fontSize:8,cellPadding:3},
+      bodyStyles:{fontSize:7.5,cellPadding:2.8},
+      alternateRowStyles:{fillColor:[247,249,252]},
+      columnStyles:{
+        idx:{cellWidth:10,halign:'center',textColor:[133,150,170],fontStyle:'normal'},
+        score:{cellWidth:18,halign:'center',fontStyle:'bold'},
+        grade:{cellWidth:15,halign:'center'},
+      },
+      didDrawCell:(data)=>{
+        if(data.column.dataKey==='grade'&&data.section==='body'){
+          const g=data.cell.raw;
+          const gs=scale.find(s=>s.g===g);
+          if(gs){
+            const[r,g2,b]=hexToRgb(gs.bg);
+            const[tr,tg,tb]=hexToRgb(gs.tc);
+            const {x,y,width,height}=data.cell;
+            doc.setFillColor(r,g2,b);
+            doc.roundedRect(x+1,y+1,width-2,height-2,1.5,1.5,'F');
+            doc.setTextColor(tr,tg,tb);
+            doc.setFont('helvetica','bold');doc.setFontSize(7.5);
+            doc.text(g,x+width/2,y+height/2+0.8,{align:'center'});
+          }
+        }
+      },
+    });
+
+    // Footer on all pages
+    const pageCount=doc.internal.getNumberOfPages();
+    for(let p=1;p<=pageCount;p++){
+      doc.setPage(p);
+      doc.setDrawColor(200,210,225);doc.setLineWidth(.3);
+      doc.line(M,PH-12,PW-M,PH-12);
+      doc.setFontSize(6.5);doc.setFont('helvetica','normal');doc.setTextColor(150,160,175);
+      doc.text('University  ·  Assessment Analytics & Grade Reporting System',M,PH-7);
+      doc.text(`Page ${p} of ${pageCount}`,PW-M,PH-7,{align:'right'});
+      doc.text(`Confidential — ${dateStr}`,PW/2,PH-7,{align:'center'});
+    }
+
+    doc.save(`Grade_Report_${now.toISOString().slice(0,10)}.pdf`);
+  }catch(err){
+    console.error(err);
+    alert('PDF generation error: '+err.message);
+  } finally {
+    document.getElementById('pdfOverlay').classList.remove('show');
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  EXPORT CSV / COPY
+// ══════════════════════════════════════════════════════════
+function buildExportData(d, list){
+  // Use provided list (sorted/filtered) or fall back to all students
+  const src = list || filtered || students;
+  const hasReg=students.some(s=>s.reg);
+  const hasNm =students.some(s=>s.name&&s.name!=='—');
+  const cols=['#',hasReg?'Registration Number':null,hasNm?'Student Name':null,'Score','Grade'].filter(Boolean);
+  const rows=src.map((s,i)=>{
+    const r=[i+1];
+    if(hasReg)r.push(s.reg||'');
+    if(hasNm) r.push(s.name);
+    r.push(s.score.toFixed(2),s.go.g);
+    return r.join(d);
+  });
+  return[cols.join(d),...rows].join('\n');
+}
+function exportCSV(){
+  if(!students.length)return;
+  const b=new Blob([buildExportData(',')],{type:'text/csv;charset=utf-8'});
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(b),download:'Grades.csv'});
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+function copyTSV(){
+  if(!students.length)return;
+  const text=buildExportData('\t');
+  const btn=document.getElementById('copyBtn');
+  const orig=btn.textContent;
+  function flashOK(){btn.textContent='✅ Copied!';setTimeout(()=>btn.textContent=orig,2200);}
+  // Modern clipboard API
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(flashOK).catch(()=>fallbackCopy(text,flashOK));
+  } else {
+    fallbackCopy(text,flashOK);
+  }
+}
+function fallbackCopy(text,cb){
+  // Works in non-HTTPS / older browsers
+  const ta=document.createElement('textarea');
+  ta.value=text;
+  ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus();ta.select();
+  try{document.execCommand('copy');cb();}
+  catch(e){alert('Copy failed — please use the CSV export instead.');}
+  document.body.removeChild(ta);
+}
+
+// ══════════════════════════════════════════════════════════
+//  FILE DROP / PASTE
+// ══════════════════════════════════════════════════════════
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)handleFile({target:{files:e.dataTransfer.files}});});
+
+let pt=null;
+document.getElementById('pasteArea').addEventListener('input',()=>{
+  clearTimeout(pt);
+  pt=setTimeout(()=>{if(document.getElementById('pasteArea').value.trim())parseText(document.getElementById('pasteArea').value);},500);
+});
+function parseAndMap(){const v=document.getElementById('pasteArea').value.trim();if(!v){setStatus('Please paste some data first.','err');return;}parseText(v,'pasted data');}
+
+// ══════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════
+function setStatus(msg,type){const m={ok:'st-ok',warn:'st-warn',err:'st-err',info:'st-info'};document.getElementById('statusBox').innerHTML=`<div class="status ${m[type]||'st-info'}">${msg}</div>`;}
+function clearStatus(){document.getElementById('statusBox').innerHTML='';}
+function hardReset(){
+  document.getElementById('pasteArea').value='';
+  clearStatus();
+  document.getElementById('mapperSection').style.display='none';
+  document.getElementById('resultsSection').style.display='none';
+  document.getElementById('fileInput').value='';
+  rawHeaders=[];rawRows=[];students=[];filtered=[];
+  if(barChartInst){barChartInst.destroy();barChartInst=null;}
+  if(pieChartInst){pieChartInst.destroy();pieChartInst=null;}
+}
+
+function loadSample(){
+  document.getElementById('pasteArea').value=`'Username'\t'First name'\t'Surname'\t'Course total (Real)'\t'Last downloaded from this course'
+'2025md95'\t'MENTALLA MOHAMED'\t'ABDELZAHER'\t75\t'1779253150'
+'2025d116'\t'AAFI'\t'SHOB'\t72\t'1779253150'
+'2025td83'\t'AAMI'\t'SHAH'\t79\t'1779253150'
+'2025lp18'\t'AARA DHAR'\t'SHEIK'\t88\t'1779253150'
+'2025m27'\t'RAHMAN AI'\t'MOHMED'\t73\t'1779253150'
+'2025s5'\t'ABDOLLAH'\t' BORHANI'\t72\t'1779253150'
+'2025opt07'\t'Abdulla wahab'\t'Alhoori'\t69\t'1779253150'
+
+  parseText(document.getElementById('pasteArea').value,'sample data');
+}
+
+// ── Init ──
+buildScaleEditor();
+</script>
+</body>
+</html>

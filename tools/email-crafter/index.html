@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MailCraft Studio — Email Designer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#F1F0EC;
+  --surface:#FFFFFF;
+  --surface-2:#FAFAF8;
+  --border:#E6E4DE;
+  --border-strong:#D6D3CB;
+  --ink:#1B1B2A;
+  --ink-2:#55556A;
+  --ink-3:#8A8A9C;
+  --accent:#5B5BD6;
+  --accent-hover:#4A4AC4;
+  --accent-soft:#EEEEFB;
+  --canvas:#E7E6E1;
+  --paper:#FFFFFF;
+  --danger:#DC2626;
+  --danger-soft:#FCEBEB;
+  --ok:#0E8A6E;
+  --radius:10px;
+  --radius-sm:7px;
+  --shadow-sm:0 1px 2px rgba(27,27,42,.06);
+  --shadow:0 8px 28px rgba(27,27,42,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:13.5px;line-height:1.5;
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#cfccc4;border-radius:8px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#bbb7ad}
+
+/* ============ TOP BAR ============ */
+.topbar{
+  height:56px;display:flex;align-items:center;padding:0 16px;gap:14px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  position:relative;z-index:60;
+}
+.brand{display:flex;align-items:center;gap:10px;padding-right:14px;border-right:1px solid var(--border);height:30px}
+.brand-mark{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),#7c5cf0);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(91,91,214,.3)
+}
+.brand-mark svg{width:17px;height:17px;color:#fff}
+.brand-name{font-weight:800;font-size:15px;letter-spacing:-.3px}
+.brand-name span{color:var(--accent)}
+.doc-name{
+  background:transparent;border:1px solid transparent;border-radius:7px;padding:5px 9px;
+  font-weight:600;font-size:13px;color:var(--ink-2);max-width:200px;
+}
+.doc-name:hover{border-color:var(--border)}
+.doc-name:focus{outline:none;border-color:var(--accent);background:var(--surface-2)}
+.spacer{flex:1}
+.btn{
+  display:inline-flex;align-items:center;gap:7px;border-radius:8px;padding:8px 13px;
+  font-weight:600;font-size:12.5px;transition:.15s;white-space:nowrap;border:1px solid transparent;
+}
+.btn svg{width:15px;height:15px}
+.btn-ghost{color:var(--ink-2);border-color:var(--border-strong)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--ink)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-soft{background:var(--accent-soft);color:var(--accent)}
+.btn-soft:hover{background:#e2e2fa}
+.btn-icon{padding:8px;border-radius:8px;color:var(--ink-2);border:1px solid var(--border-strong)}
+.btn-icon:hover{background:var(--surface-2);color:var(--ink)}
+
+/* ============ WORKSPACE ============ */
+.workspace{display:flex;height:calc(100vh - 56px)}
+
+/* LEFT — block library */
+.library{
+  width:248px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
+  overflow-y:auto;padding:14px 12px 40px;
+}
+.lib-search{
+  width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+  padding:8px 11px;margin-bottom:12px;color:var(--ink);
+}
+.lib-search:focus{outline:none;border-color:var(--accent)}
+.lib-cat{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink-3);margin:14px 4px 8px}
+.lib-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lib-item{
+  background:var(--surface-2);border:1px solid var(--border);border-radius:9px;
+  padding:11px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  text-align:center;transition:.14s;cursor:grab;
+}
+.lib-item:hover{border-color:var(--accent);background:var(--accent-soft);transform:translateY(-1px)}
+.lib-item:active{cursor:grabbing}
+.lib-item svg{width:19px;height:19px;color:var(--accent)}
+.lib-item span{font-size:11px;font-weight:600;color:var(--ink-2);line-height:1.25}
+
+/* CENTER — canvas */
+.canvas-wrap{flex:1;background:var(--canvas);overflow-y:auto;position:relative;padding:26px 0 120px}
+.canvas-toolbar{
+  position:sticky;top:0;z-index:20;display:flex;justify-content:center;gap:6px;
+  padding:10px;margin:-26px 0 22px;background:linear-gradient(var(--canvas) 70%,rgba(231,230,225,0));
+}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:3px}
+.seg button{padding:6px 13px;border-radius:6px;font-weight:600;font-size:12px;color:var(--ink-2)}
+.seg button.on{background:var(--accent);color:#fff}
+.canvas{
+  width:600px;max-width:92%;margin:0 auto;background:var(--paper);
+  box-shadow:var(--shadow);border-radius:4px;min-height:380px;overflow:hidden;transition:width .2s;
+}
+.canvas.mobile{width:360px}
+.canvas-empty{padding:80px 30px;text-align:center;color:var(--ink-3)}
+.canvas-empty svg{width:40px;height:40px;margin-bottom:14px;color:var(--border-strong)}
+.canvas-empty h3{font-size:15px;color:var(--ink-2);margin-bottom:6px;font-weight:700}
+.canvas-empty p{font-size:12.5px;max-width:280px;margin:0 auto;line-height:1.6}
+
+/* block on canvas */
+.cblock{position:relative;cursor:pointer;outline:2px solid transparent;outline-offset:-2px;transition:outline-color .12s}
+.cblock:hover{outline-color:var(--accent-soft)}
+.cblock.sel{outline-color:var(--accent)}
+.cblock.drop-target-above{box-shadow:inset 0 3px 0 var(--accent)}
+.cblock.drop-target-below{box-shadow:inset 0 -3px 0 var(--accent)}
+.cblock-tools{
+  position:absolute;top:6px;right:6px;display:none;gap:3px;background:var(--ink);
+  border-radius:7px;padding:3px;z-index:8;box-shadow:0 4px 12px rgba(0,0,0,.25)
+}
+.cblock.sel .cblock-tools,.cblock:hover .cblock-tools{display:flex}
+.cblock-tools button{padding:5px;border-radius:5px;color:#cfcfe0}
+.cblock-tools button:hover{background:rgba(255,255,255,.12);color:#fff}
+.cblock-tools button svg{width:14px;height:14px;display:block}
+.cblock-tools button.del:hover{background:var(--danger);color:#fff}
+.cblock-label{
+  position:absolute;top:6px;left:6px;display:none;background:var(--accent);color:#fff;
+  font-size:9.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  padding:3px 7px;border-radius:6px;z-index:8
+}
+.cblock.sel .cblock-label{display:block}
+
+/* RIGHT — inspector */
+.inspector{
+  width:300px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);
+  overflow-y:auto;padding:0 0 60px
+}
+.insp-head{
+  padding:15px 16px 13px;border-bottom:1px solid var(--border);position:sticky;top:0;
+  background:var(--surface);z-index:5
+}
+.insp-head h3{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.insp-head .tag{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-soft);padding:3px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.4px}
+.insp-body{padding:14px 16px}
+.insp-empty{padding:40px 22px;text-align:center;color:var(--ink-3);font-size:12.5px;line-height:1.7}
+.insp-empty svg{width:34px;height:34px;color:var(--border-strong);margin-bottom:12px}
+.field{margin-bottom:14px}
+.field>label{display:block;font-size:11px;font-weight:700;color:var(--ink-2);margin-bottom:6px;letter-spacing:.2px}
+.field input[type=text],.field input[type=url],.field input[type=number],.field textarea,.field select{
+  width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--ink)
+}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent);background:#fff}
+.field textarea{resize:vertical;min-height:74px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.color-field{display:flex;align-items:center;gap:8px}
+.color-field input[type=color]{width:34px;height:34px;padding:0;border:1px solid var(--border);border-radius:7px;background:none;cursor:pointer}
+.color-field input[type=text]{flex:1}
+.seg-mini{display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:3px;gap:2px}
+.seg-mini button{flex:1;padding:6px 4px;border-radius:5px;font-size:11px;font-weight:600;color:var(--ink-2)}
+.seg-mini button.on{background:var(--accent);color:#fff}
+.seg-mini button svg{width:14px;height:14px;display:block;margin:0 auto}
+.range-field{display:flex;align-items:center;gap:9px}
+.range-field input[type=range]{flex:1;accent-color:var(--accent)}
+.range-val{font-size:11px;font-weight:700;color:var(--ink-2);min-width:42px;text-align:right;font-family:'JetBrains Mono',monospace}
+.toggle{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-top:1px solid var(--border)}
+.toggle label{font-size:12px;font-weight:600;color:var(--ink-2)}
+.switch{position:relative;width:38px;height:21px;flex-shrink:0}
+.switch input{display:none}
+.switch span{position:absolute;inset:0;background:var(--border-strong);border-radius:20px;transition:.2s}
+.switch span:before{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span:before{transform:translateX(17px)}
+.hint{font-size:10.5px;color:var(--ink-3);line-height:1.5;margin-top:6px}
+.hint.warn{color:#b45309;background:#fef6e7;padding:7px 9px;border-radius:6px}
+.insp-section{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink-3);margin:18px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
+.insp-section:first-child{border-top:none;padding-top:0;margin-top:0}
+
+/* ============ MODALS ============ */
+.overlay{
+  position:fixed;inset:0;background:rgba(27,27,42,.5);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:20px
+}
+.overlay.show{display:flex}
+.modal{
+  background:var(--surface);border-radius:14px;width:100%;max-width:520px;max-height:88vh;
+  overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.3)
+}
+.modal.wide{max-width:760px}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-head h2{font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px}
+.modal-head h2 svg{width:18px;height:18px;color:var(--accent)}
+.modal-close{padding:7px;border-radius:7px;color:var(--ink-3)}
+.modal-close:hover{background:var(--surface-2);color:var(--ink)}
+.modal-body{padding:20px 22px;overflow-y:auto}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:9px;background:var(--surface-2)}
+.modal .field>label{font-size:12px}
+.callout{display:flex;gap:10px;padding:11px 13px;border-radius:9px;font-size:12px;line-height:1.55;margin-bottom:16px}
+.callout svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+.callout.info{background:var(--accent-soft);color:#3f3f9a}
+.callout.ok{background:#e7f6f1;color:#0a6e58}
+.callout.warn{background:#fef6e7;color:#92500a}
+.code-view{
+  background:#1b1b2a;color:#d4d4e6;font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  border-radius:9px;padding:14px;max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-word;line-height:1.55
+}
+.tpl-list{display:flex;flex-direction:column;gap:8px}
+.tpl-item{
+  display:flex;align-items:center;justify-content:space-between;padding:11px 13px;
+  background:var(--surface-2);border:1px solid var(--border);border-radius:9px
+}
+.tpl-item:hover{border-color:var(--accent)}
+.tpl-item .tpl-meta b{font-size:13px;font-weight:700}
+.tpl-item .tpl-meta small{display:block;color:var(--ink-3);font-size:11px}
+.tpl-item .tpl-acts{display:flex;gap:6px}
+.recip-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:20px;display:flex;align-items:center;gap:5px}
+.chip button{color:var(--accent);display:flex}
+.status-msg{font-size:12.5px;font-weight:600;padding:9px 12px;border-radius:8px;margin-top:12px;display:none}
+.status-msg.show{display:block}
+.status-msg.ok{background:#e7f6f1;color:#0a6e58}
+.status-msg.err{background:var(--danger-soft);color:#b91c1c}
+
+/* toast */
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:600;
+  box-shadow:0 12px 30px rgba(0,0,0,.3);z-index:200;transition:transform .28s cubic-bezier(.2,.9,.3,1.3);display:flex;align-items:center;gap:9px
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast svg{width:16px;height:16px;color:#86efac}
+
+@media(max-width:920px){
+  .library{width:200px}.inspector{width:260px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="m4 7 8 6 8-6"/></svg>
+    </div>
+    <div class="brand-name">Mail<span>Craft</span></div>
+  </div>
+  <input class="doc-name" id="docName" value="Untitled email" spellcheck="false" />
+  <div class="spacer"></div>
+  <button class="btn btn-ghost" onclick="openTemplates()" title="Saved templates">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+    Templates
+  </button>
+  <button class="btn btn-ghost" onclick="openPreview()" title="Live preview">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+    Preview
+  </button>
+  <button class="btn btn-ghost" onclick="openExport()" title="Export HTML">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
+    HTML
+  </button>
+  <button class="btn-icon" onclick="openSettings()" title="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+  <button class="btn btn-primary" onclick="openSend()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/><path d="M22 2 11 13"/></svg>
+    Send
+  </button>
+</div>
+
+<!-- ============ WORKSPACE ============ -->
+<div class="workspace">
+  <!-- LIBRARY -->
+  <aside class="library" id="library">
+    <input class="lib-search" id="libSearch" placeholder="Search blocks…" oninput="renderLibrary()" />
+    <div id="libBody"></div>
+  </aside>
+
+  <!-- CANVAS -->
+  <main class="canvas-wrap" id="canvasWrap">
+    <div class="canvas-toolbar">
+      <div class="seg">
+        <button id="vwDesktop" class="on" onclick="setView('desktop')">Desktop</button>
+        <button id="vwMobile" onclick="setView('mobile')">Mobile</button>
+      </div>
+    </div>
+    <div class="canvas" id="canvas"></div>
+  </main>
+
+  <!-- INSPECTOR -->
+  <aside class="inspector" id="inspector">
+    <div class="insp-head"><h3 id="inspTitle">Inspector</h3></div>
+    <div id="inspBody"></div>
+  </aside>
+</div>
+
+<!-- ============ MODAL: SEND ============ -->
+<div class="overlay" id="sendOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg>Send email</h2>
+      <button class="modal-close" onclick="closeModal('sendOverlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="callout info" id="sendConfigNote">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>Connect your Apps Script backend in <b>Settings</b> before sending. Your email is delivered from your own Gmail / Workspace account.</span>
+      </div>
+      <div class="field">
+        <label>Recipients</label>
+        <input type="text" id="recipInput" placeholder="name@example.com — press Enter to add" onkeydown="recipKey(event)" />
+        <div class="recip-chips" id="recipChips"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>From name</label><input type="text" id="fromName" placeholder="Your name / brand" /></div>
+        <div class="field"><label>Reply-to (optional)</label><input type="text" id="replyTo" placeholder="reply@example.com" /></div>
+      </div>
+      <div class="field"><label>Subject</label><input type="text" id="subjectLine" placeholder="Subject line" /></div>
+      <div class="field"><label>Preheader <span style="font-weight:500;color:var(--ink-3)">(inbox preview text)</span></label><input type="text" id="preheader" placeholder="One line shown after the subject in the inbox" /></div>
+      <div class="status-msg" id="sendStatus"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('sendOverlay')">Cancel</button>
+      <button class="btn btn-soft" onclick="sendTest()">Send test to me</button>
+      <button class="btn btn-primary" id="sendBtn" onclick="sendEmail()">Send now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: SETTINGS ============ -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82M4.6 9a1.65 1.65 0 0 0-.33-1.82"/></svg>Settings</h2>
+      <button class="modal-close" onclick="closeModal('settingsOverlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="callout ok">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        <span>Saved locally in this browser only. Deploy the Apps Script file once, then paste the Web App URL and token here.</span>
+      </div>
+      <div class="insp-section" style="margin-top:0">Sending backend</div>
+      <div class="field"><label>Apps Script Web App URL</label><input type="url" id="setUrl" placeholder="https://script.google.com/macros/s/…/exec" /></div>
+      <div class="field"><label>Access token</label><input type="text" id="setToken" placeholder="Must match the token in your .gs file" /></div>
+      <div class="field"><label>Your own email (for test sends)</label><input type="text" id="setMyEmail" placeholder="you@example.com" /></div>
+      <div class="insp-section">Brand kit <span style="text-transform:none;font-weight:500;color:var(--ink-3)">— applied to new blocks</span></div>
+      <div class="row2">
+        <div class="field"><label>Brand colour</label><div class="color-field"><input type="color" id="setBrandColor" value="#5B5BD6" /><input type="text" id="setBrandColorHex" value="#5B5BD6" /></div></div>
+        <div class="field"><label>Button radius (px)</label><input type="number" id="setBtnRadius" value="8" min="0" max="40" /></div>
+      </div>
+      <div class="field"><label>Logo image URL</label><input type="url" id="setLogo" placeholder="https://…/logo.png" /></div>
+      <div class="field">
+        <label>Body font</label>
+        <select id="setFont">
+          <option value="Arial, Helvetica, sans-serif">Arial / Helvetica</option>
+          <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica Neue</option>
+          <option value="Georgia, 'Times New Roman', serif">Georgia (serif)</option>
+          <option value="Verdana, Geneva, sans-serif">Verdana</option>
+          <option value="Tahoma, Geneva, sans-serif">Tahoma</option>
+          <option value="'Trebuchet MS', Helvetica, sans-serif">Trebuchet MS</option>
+        </select>
+        <div class="hint">Email clients only render web-safe fonts reliably, so the list is limited on purpose.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('settingsOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: EXPORT ============ -->
+<div class="overlay" id="exportOverlay">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>Export HTML</h2>
+      <button class="modal-close" onclick="closeModal('exportOverlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="callout info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>This is email-client-safe HTML — table layout with inline styles. Paste it into any email tool, or download the file.</span>
+      </div>
+      <div class="code-view" id="exportCode"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('exportOverlay')">Close</button>
+      <button class="btn btn-soft" onclick="downloadHTML()">Download .html</button>
+      <button class="btn btn-primary" onclick="copyHTML()">Copy HTML</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: PREVIEW ============ -->
+<div class="overlay" id="previewOverlay">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Live preview</h2>
+      <button class="modal-close" onclick="closeModal('previewOverlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" style="background:var(--canvas)">
+      <iframe id="previewFrame" style="width:100%;height:480px;border:none;background:#fff;border-radius:8px"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: TEMPLATES ============ -->
+<div class="overlay" id="templatesOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>Templates</h2>
+      <button class="modal-close" onclick="closeModal('templatesOverlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input type="text" id="tplName" placeholder="Save current design as…" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 11px" />
+        <button class="btn btn-primary" onclick="saveTemplate()">Save</button>
+      </div>
+      <div class="insp-section" style="margin-top:0">Saved designs</div>
+      <div class="tpl-list" id="tplList"></div>
+      <div class="insp-section">Starter layouts</div>
+      <div class="tpl-list" id="starterList"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:18px 0" />
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="exportJSON()">Export .json</button>
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="document.getElementById('importFile').click()">Import .json</button>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+<script>
+/* ============================================================
+   MailCraft Studio v2 — state
+   ============================================================ */
+const STORE_KEY='mailcraft_v2_doc';
+const SET_KEY='mailcraft_v2_settings';
+const TPL_KEY='mailcraft_v2_templates';
+
+let settings={
+  url:'', token:'', myEmail:'',
+  brandColor:'#5B5BD6', btnRadius:8, logo:'', font:"Arial, Helvetica, sans-serif"
+};
+let doc={ name:'Untitled email', blocks:[] };
+let selectedId=null;
+let recipients=[];
+let view='desktop';
+
+/* ---- block definitions (defaults + library catalogue) ---- */
+const CATALOG=[
+  {cat:'Structure', items:[
+    {type:'logo', label:'Logo'},
+    {type:'spacer', label:'Spacer'},
+    {type:'divider', label:'Divider'},
+    {type:'columns', label:'Two columns'}
+  ]},
+  {cat:'Content', items:[
+    {type:'heading', label:'Heading'},
+    {type:'text', label:'Text'},
+    {type:'button', label:'Button'},
+    {type:'image', label:'Image'},
+    {type:'hero', label:'Image + text'},
+    {type:'imageButton', label:'Button on image'}
+  ]},
+  {cat:'Media', items:[
+    {type:'gif', label:'Animated GIF'},
+    {type:'video', label:'Video link'}
+  ]},
+  {cat:'Footer', items:[
+    {type:'social', label:'Social icons'},
+    {type:'footer', label:'Footer'}
+  ]}
+];
+
+const ICONS={
+  logo:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 8 9 6 9-6"/>',
+  spacer:'<path d="M12 3v18M8 7l4-4 4 4M8 17l4 4 4-4"/>',
+  divider:'<path d="M3 12h18"/>',
+  columns:'<rect x="3" y="4" width="7" height="16" rx="1"/><rect x="14" y="4" width="7" height="16" rx="1"/>',
+  heading:'<path d="M6 4v16M18 4v16M6 12h12"/>',
+  text:'<path d="M4 7h16M4 12h16M4 17h10"/>',
+  button:'<rect x="3" y="8" width="18" height="8" rx="4"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 16-5-5L5 20"/>',
+  hero:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 14h10M7 17h6"/><circle cx="8" cy="8" r="1.5"/>',
+  imageButton:'<rect x="3" y="4" width="18" height="16" rx="2"/><rect x="7" y="13" width="10" height="4" rx="2"/>',
+  gif:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 10v4M8 12h2M12 10v4M16 10h-2v4h2M14 12h2"/>',
+  video:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/>',
+  social:'<circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/>',
+  footer:'<rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 17h6"/>'
+};
+
+function defaultBlock(type){
+  const b=settings.brandColor;
+  const r=settings.btnRadius;
+  const D={
+    logo:{src:settings.logo||'https://placehold.co/180x54/5B5BD6/ffffff?text=LOGO', width:180, align:'center', bg:'#ffffff', pad:24},
+    spacer:{height:24, bg:'#ffffff'},
+    divider:{color:'#E2E2E2', thickness:1, width:100, pad:14, bg:'#ffffff'},
+    heading:{text:'Your headline goes here', level:'h2', color:'#1B1B2A', align:'left', size:26, pad:'18,28,6,28', bg:'#ffffff', weight:700},
+    text:{text:'Write your message here. Click to edit this text and tell your readers what matters — keep it warm, clear and short.', color:'#444444', align:'left', size:15, pad:'6,28,14,28', bg:'#ffffff', lh:1.6},
+    button:{label:'Take action', href:'https://example.com', bg:b, color:'#ffffff', radius:r, align:'left', padY:13, padX:30, pad:'10,28,18,28', blockBg:'#ffffff', fullWidth:false, anim:'none'},
+    image:{src:'https://placehold.co/600x320/EEEEFB/5B5BD6?text=Image', alt:'Image', width:100, align:'center', href:'', radius:0, pad:0, bg:'#ffffff'},
+    hero:{src:'https://placehold.co/600x340/5B5BD6/ffffff?text=Hero', headline:'Big bold message', sub:'A supporting line that adds context underneath.', btnLabel:'Learn more', btnHref:'https://example.com', textColor:'#ffffff', overlay:35, btnBg:'#ffffff', btnColor:'#1B1B2A', radius:r, align:'center'},
+    imageButton:{src:'https://placehold.co/600x300/EEEEFB/5B5BD6?text=Tap+the+button', btnLabel:'Shop now', btnHref:'https://example.com', btnBg:b, btnColor:'#ffffff', radius:r, posV:'bottom', posH:'center', alt:'Promo', bg:'#ffffff'},
+    gif:{src:'https://placehold.co/600x300/5B5BD6/ffffff?text=Animated+GIF', alt:'Animated', width:100, align:'center', href:'', pad:0, bg:'#ffffff'},
+    video:{thumb:'https://placehold.co/600x340/1B1B2A/ffffff?text=Video+thumbnail', href:'https://youtube.com', playColor:'#ffffff', width:100, align:'center', pad:0, bg:'#ffffff'},
+    columns:{lImg:'https://placehold.co/270x180/EEEEFB/5B5BD6?text=Left', lTitle:'Left title', lText:'Short supporting copy for the left column.', lHref:'', rImg:'https://placehold.co/270x180/EEEEFB/5B5BD6?text=Right', rTitle:'Right title', rText:'Short supporting copy for the right column.', rHref:'', titleColor:'#1B1B2A', textColor:'#555555', pad:'12,20,12,20', bg:'#ffffff'},
+    social:{items:[{n:'facebook',h:'https://facebook.com'},{n:'instagram',h:'https://instagram.com'},{n:'youtube',h:'https://youtube.com'},{n:'linkedin',h:'https://linkedin.com'}], color:'#8A8A9C', size:24, align:'center', pad:18, bg:'#ffffff'},
+    footer:{company:'Your Company', address:'Street, City, Country', note:'You receive this email because you opted in.', unsub:'Unsubscribe', unsubHref:'#', color:'#9aa0aa', bg:'#F5F5F7', size:12, pad:24}
+  };
+  return JSON.parse(JSON.stringify(D[type]));
+}
+
+/* ============================================================
+   Library
+   ============================================================ */
+function renderLibrary(){
+  const q=(document.getElementById('libSearch').value||'').toLowerCase();
+  let html='';
+  CATALOG.forEach(group=>{
+    const items=group.items.filter(i=>i.label.toLowerCase().includes(q)||i.type.toLowerCase().includes(q));
+    if(!items.length) return;
+    html+=`<div class="lib-cat">${group.cat}</div><div class="lib-grid">`;
+    items.forEach(i=>{
+      html+=`<div class="lib-item" draggable="true" ondragstart="libDragStart(event,'${i.type}')" onclick="addBlock('${i.type}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICONS[i.type]}</svg>
+        <span>${i.label}</span></div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('libBody').innerHTML=html||'<div style="padding:20px;color:var(--ink-3);font-size:12px;text-align:center">No blocks match.</div>';
+}
+
+let dragNewType=null;
+function libDragStart(e,type){ dragNewType=type; e.dataTransfer.effectAllowed='copy'; }
+
+/* ============================================================
+   Canvas blocks (editor render)
+   ============================================================ */
+function addBlock(type, index){
+  const blk={id:'b'+Date.now()+Math.floor(Math.random()*999), type, props:defaultBlock(type)};
+  if(index===undefined||index<0) doc.blocks.push(blk);
+  else doc.blocks.splice(index,0,blk);
+  selectedId=blk.id;
+  renderCanvas(); renderInspector(); save();
+  setTimeout(()=>{const el=document.querySelector(`[data-id="${blk.id}"]`); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});},60);
+}
+function selectBlock(id){ selectedId=id; renderCanvas(); renderInspector(); }
+function moveBlock(id,dir){
+  const i=doc.blocks.findIndex(b=>b.id===id); if(i<0)return;
+  const j=i+dir; if(j<0||j>=doc.blocks.length)return;
+  [doc.blocks[i],doc.blocks[j]]=[doc.blocks[j],doc.blocks[i]];
+  renderCanvas(); save();
+}
+function dupBlock(id){
+  const i=doc.blocks.findIndex(b=>b.id===id); if(i<0)return;
+  const copy=JSON.parse(JSON.stringify(doc.blocks[i])); copy.id='b'+Date.now()+Math.floor(Math.random()*999);
+  doc.blocks.splice(i+1,0,copy); selectedId=copy.id;
+  renderCanvas(); renderInspector(); save();
+}
+function delBlock(id){
+  doc.blocks=doc.blocks.filter(b=>b.id!==id);
+  if(selectedId===id) selectedId=null;
+  renderCanvas(); renderInspector(); save();
+}
+
+function renderCanvas(){
+  const c=document.getElementById('canvas');
+  c.className='canvas'+(view==='mobile'?' mobile':'');
+  if(!doc.blocks.length){
+    c.innerHTML=`<div class="canvas-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <h3>Start your design</h3>
+      <p>Click a block on the left, or drag it here. Stack images, text and buttons in any order — links sit above, between or below your images.</p></div>`;
+    return;
+  }
+  c.innerHTML=doc.blocks.map((b,i)=>{
+    const sel=b.id===selectedId?' sel':'';
+    return `<div class="cblock${sel}" data-id="${b.id}" data-index="${i}" draggable="true"
+        onclick="event.stopPropagation();selectBlock('${b.id}')"
+        ondragstart="blockDragStart(event,${i})" ondragover="blockDragOver(event,${i})" ondragleave="blockDragLeave(event)" ondrop="blockDrop(event,${i})" ondragend="blockDragEnd(event)">
+      <div class="cblock-label">${b.type}</div>
+      <div class="cblock-tools">
+        <button onclick="event.stopPropagation();moveBlock('${b.id}',-1)" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg></button>
+        <button onclick="event.stopPropagation();moveBlock('${b.id}',1)" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>
+        <button onclick="event.stopPropagation();dupBlock('${b.id}')" title="Duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
+        <button class="del" onclick="event.stopPropagation();delBlock('${b.id}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      </div>
+      ${renderBlockHTML(b)}
+    </div>`;
+  }).join('');
+}
+
+/* drag reorder */
+let dragFrom=null;
+function blockDragStart(e,i){ dragFrom=i; e.dataTransfer.effectAllowed='move'; }
+function blockDragOver(e,i){
+  e.preventDefault();
+  if(dragNewType!==null){ e.dataTransfer.dropEffect='copy'; }
+  const el=e.currentTarget; const r=el.getBoundingClientRect();
+  const below=(e.clientY-r.top)>r.height/2;
+  el.classList.toggle('drop-target-below',below);
+  el.classList.toggle('drop-target-above',!below);
+}
+function blockDragLeave(e){ e.currentTarget.classList.remove('drop-target-below','drop-target-above'); }
+function blockDrop(e,i){
+  e.preventDefault(); e.stopPropagation();
+  const el=e.currentTarget; const r=el.getBoundingClientRect();
+  const below=(e.clientY-r.top)>r.height/2;
+  let target=below?i+1:i;
+  el.classList.remove('drop-target-below','drop-target-above');
+  if(dragNewType!==null){ addBlock(dragNewType,target); dragNewType=null; return; }
+  if(dragFrom===null) return;
+  const blk=doc.blocks.splice(dragFrom,1)[0];
+  if(dragFrom<target) target--;
+  doc.blocks.splice(target,0,blk);
+  dragFrom=null; renderCanvas(); save();
+}
+function blockDragEnd(e){ dragFrom=null; document.querySelectorAll('.cblock').forEach(b=>b.classList.remove('drop-target-below','drop-target-above')); }
+
+/* canvas-wide drop (empty area) */
+document.addEventListener('DOMContentLoaded',()=>{
+  const cw=document.getElementById('canvasWrap');
+  cw.addEventListener('dragover',e=>{ if(dragNewType!==null){e.preventDefault();e.dataTransfer.dropEffect='copy';} });
+  cw.addEventListener('drop',e=>{ if(dragNewType!==null && !e.target.closest('.cblock')){ e.preventDefault(); addBlock(dragNewType); dragNewType=null; } });
+  document.getElementById('canvas').addEventListener('click',()=>{ selectedId=null; renderCanvas(); renderInspector(); });
+});
+
+/* editor preview of a single block (visual approximation) */
+function px(v){return v+'px';}
+function alignFlex(a){return a==='left'?'flex-start':a==='right'?'flex-end':'center';}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function padCss(p){ if(!p) return '0'; const a=(''+p).split(',').map(n=>n.trim()+'px'); return a.length===4?a.join(' '):p+'px'; }
+
+function renderBlockHTML(b){
+  const p=b.props;
+  switch(b.type){
+    case 'logo':
+      return `<div style="background:${p.bg};padding:${p.pad}px;text-align:${p.align}"><img src="${esc(p.src)}" style="width:${p.width}px;max-width:100%" /></div>`;
+    case 'spacer':
+      return `<div style="background:${p.bg};height:${p.height}px"></div>`;
+    case 'divider':
+      return `<div style="background:${p.bg};padding:${p.pad}px 28px"><div style="width:${p.width}%;margin:auto;border-top:${p.thickness}px solid ${p.color}"></div></div>`;
+    case 'heading':
+      return `<div style="background:${p.bg};padding:${padCss(p.pad)};text-align:${p.align}"><div style="font-size:${p.size}px;font-weight:${p.weight};color:${p.color};line-height:1.25">${esc(p.text)}</div></div>`;
+    case 'text':
+      return `<div style="background:${p.bg};padding:${padCss(p.pad)};text-align:${p.align}"><div style="font-size:${p.size}px;color:${p.color};line-height:${p.lh}">${esc(p.text).replace(/\n/g,'<br>')}</div></div>`;
+    case 'button':{
+      const w=p.fullWidth?'display:block;':'display:inline-block;';
+      return `<div style="background:${p.blockBg};padding:${padCss(p.pad)};text-align:${p.align}">
+        <span style="${w}background:${p.bg};color:${p.color};border-radius:${p.radius}px;padding:${p.padY}px ${p.padX}px;font-size:14px;font-weight:600">${esc(p.label)}</span></div>`;
+    }
+    case 'image':
+      return `<div style="background:${p.bg};padding:${p.pad}px;text-align:${p.align}"><img src="${esc(p.src)}" style="width:${p.width}%;max-width:100%;border-radius:${p.radius}px;display:inline-block" /></div>`;
+    case 'hero':
+      return `<div style="position:relative;text-align:${p.align};border-radius:${p.radius}px;overflow:hidden">
+        <img src="${esc(p.src)}" style="width:100%;display:block" />
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,${p.overlay/100})"></div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:${alignFlex(p.align)};padding:26px">
+          <div style="color:${p.textColor};font-size:26px;font-weight:800;line-height:1.2;margin-bottom:8px">${esc(p.headline)}</div>
+          <div style="color:${p.textColor};font-size:14px;opacity:.92;margin-bottom:14px;max-width:80%">${esc(p.sub)}</div>
+          <span style="background:${p.btnBg};color:${p.btnColor};border-radius:${p.radius}px;padding:11px 24px;font-size:13px;font-weight:700">${esc(p.btnLabel)}</span>
+        </div></div>`;
+    case 'imageButton':{
+      const jv=p.posV==='top'?'flex-start':p.posV==='middle'?'center':'flex-end';
+      return `<div style="background:${p.bg};position:relative">
+        <img src="${esc(p.src)}" style="width:100%;display:block" />
+        <div style="position:absolute;inset:0;display:flex;justify-content:${alignFlex(p.posH)};align-items:${jv};padding:20px">
+          <span style="background:${p.btnBg};color:${p.btnColor};border-radius:${p.radius}px;padding:11px 26px;font-size:13px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.25)">${esc(p.btnLabel)}</span>
+        </div></div>`;
+    }
+    case 'gif':
+      return `<div style="background:${p.bg};padding:${p.pad}px;text-align:${p.align}"><img src="${esc(p.src)}" style="width:${p.width}%;max-width:100%;display:inline-block" /></div>`;
+    case 'video':
+      return `<div style="background:${p.bg};padding:${p.pad}px;text-align:${p.align};position:relative">
+        <div style="position:relative;display:inline-block;width:${p.width}%;max-width:100%">
+          <img src="${esc(p.thumb)}" style="width:100%;display:block" />
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+            <div style="width:54px;height:54px;border-radius:50%;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="${p.playColor}"><path d="M8 5v14l11-7z"/></svg></div></div>
+        </div></div>`;
+    case 'columns':
+      return `<div style="background:${p.bg};padding:${padCss(p.pad)};display:flex;gap:16px">
+        ${['l','r'].map(s=>`<div style="flex:1">
+          <img src="${esc(p[s+'Img'])}" style="width:100%;display:block;border-radius:6px;margin-bottom:9px" />
+          <div style="font-size:15px;font-weight:700;color:${p.titleColor};margin-bottom:5px">${esc(p[s+'Title'])}</div>
+          <div style="font-size:13px;color:${p.textColor};line-height:1.5">${esc(p[s+'Text'])}</div>
+        </div>`).join('')}</div>`;
+    case 'social':
+      return `<div style="background:${p.bg};padding:${p.pad}px;text-align:${p.align}">
+        ${p.items.map(it=>`<span style="display:inline-block;margin:0 7px">${socialIcon(it.n,p.color,p.size)}</span>`).join('')}</div>`;
+    case 'footer':
+      return `<div style="background:${p.bg};padding:${p.pad}px;text-align:center;color:${p.color};font-size:${p.size}px;line-height:1.7">
+        <div style="font-weight:700;margin-bottom:4px">${esc(p.company)}</div>
+        <div>${esc(p.address)}</div><div style="margin-top:6px">${esc(p.note)}</div>
+        <div style="margin-top:8px"><span style="text-decoration:underline">${esc(p.unsub)}</span></div></div>`;
+  }
+  return '';
+}
+
+function socialIcon(n,color,size){
+  const paths={
+    facebook:'M14 9h3V6h-3c-1.7 0-3 1.3-3 3v2H8v3h3v7h3v-7h3l1-3h-4V9c0-.6.4-1 1-1z',
+    instagram:'M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm5.5-3a1 1 0 1 0 0 2 1 1 0 0 0 0-2z',
+    youtube:'M22 8.2a3 3 0 0 0-2.1-2.1C18 5.5 12 5.5 12 5.5s-6 0-7.9.6A3 3 0 0 0 2 8.2 31 31 0 0 0 2 12a31 31 0 0 0 .1 3.8 3 3 0 0 0 2.1 2.1c1.9.6 7.9.6 7.9.6s6 0 7.9-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 22 12a31 31 0 0 0-.1-3.8zM10 15V9l5 3z',
+    linkedin:'M6 9H2v12h4zM4 3a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm6 6H6v12h4v-6c0-3 4-3.2 4 0v6h4v-7c0-6-6-5.8-8-3z',
+    twitter:'M22 5.9c-.7.3-1.5.6-2.3.7a4 4 0 0 0 1.8-2.2c-.8.5-1.7.8-2.6 1A4 4 0 0 0 12 9.3 11 11 0 0 1 4 5a4 4 0 0 0 1.2 5.3c-.6 0-1.2-.2-1.7-.5a4 4 0 0 0 3.2 4 4 4 0 0 1-1.8 0 4 4 0 0 0 3.7 2.8A8 8 0 0 1 2 18.6 11 11 0 0 0 22 9z',
+    whatsapp:'M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.4A10 10 0 1 0 12 2zm5 14c-.3.7-1.5 1.3-2 1.4-.6.1-1.3.2-4-1-3.4-1.5-5.5-5-5.7-5.3-.2-.3-1.4-1.9-1.4-3.6s.9-2.5 1.2-2.8c.3-.3.7-.4 1-.4h.7c.2 0 .5 0 .8.6l1 2.3c.1.2.1.5 0 .7l-.5.7c-.2.2-.4.5-.2.8.2.4 1 1.6 2.1 2.5 1.4 1.2 2.5 1.6 2.9 1.7.3.1.5.1.7-.1l1-1.1c.2-.3.5-.2.8-.1l2.2 1c.3.2.5.3.6.4.1.3.1.9-.2 1.6z'
+  };
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="${color}">${`<path d="${paths[n]||paths.facebook}"/>`}</svg>`;
+}
+
+/* ============================================================
+   Inspector
+   ============================================================ */
+function f(label,inner){ return `<div class="field"><label>${label}</label>${inner}</div>`; }
+function inp(id,val,type='text',ph=''){ return `<input id="i_${id}" type="${type}" value="${(val??'').toString().replace(/"/g,'&quot;')}" placeholder="${ph}" oninput="up('${id}',this.value)" />`; }
+function area(id,val){ return `<textarea id="i_${id}" oninput="up('${id}',this.value)">${esc(val)}</textarea>`; }
+function color(id,val){ return `<div class="color-field"><input type="color" value="${val}" oninput="up('${id}',this.value);document.getElementById('t_${id}').value=this.value" /><input id="t_${id}" type="text" value="${val}" oninput="up('${id}',this.value)" /></div>`; }
+function align(id,val){
+  const o=[['left','M3 6h14M3 12h18M3 18h12'],['center','M3 6h18M6 12h12M4 18h16'],['right','M7 6h14M3 12h18M9 18h12']];
+  return `<div class="seg-mini">${o.map(([v,d])=>`<button class="${val===v?'on':''}" onclick="up('${id}','${v}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${`<path d="${d}"/>`}</svg></button>`).join('')}</div>`;
+}
+function range(id,val,min,max,step=1,unit=''){
+  return `<div class="range-field"><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" oninput="up('${id}',+this.value);document.getElementById('rv_${id}').textContent=this.value+'${unit}'" /><span class="range-val" id="rv_${id}">${val}${unit}</span></div>`;
+}
+function sel(id,val,opts){ return `<select onchange="up('${id}',this.value)">${opts.map(([v,l])=>`<option value="${v}" ${v===val?'selected':''}>${l}</option>`).join('')}</select>`; }
+function tog(id,val,label,hint){ return `<div class="toggle"><label>${label}</label><label class="switch"><input type="checkbox" ${val?'checked':''} onchange="up('${id}',this.checked)" /><span></span></label></div>${hint?`<div class="hint">${hint}</div>`:''}`; }
+
+function up(key,val){
+  const b=doc.blocks.find(x=>x.id===selectedId); if(!b)return;
+  b.props[key]=val; renderCanvas(); save();
+}
+function upNested(side,key,val){
+  const b=doc.blocks.find(x=>x.id===selectedId); if(!b)return;
+  b.props[side+key]=val; renderCanvas(); save();
+}
+
+function renderInspector(){
+  const title=document.getElementById('inspTitle');
+  const body=document.getElementById('inspBody');
+  const b=doc.blocks.find(x=>x.id===selectedId);
+  if(!b){
+    title.textContent='Inspector';
+    body.innerHTML=`<div class="insp-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      Select a block on the canvas to edit its content and style.</div>`;
+    return;
+  }
+  const lbl={logo:'Logo',spacer:'Spacer',divider:'Divider',heading:'Heading',text:'Text',button:'Button',image:'Image',hero:'Image + text',imageButton:'Button on image',gif:'Animated GIF',video:'Video link',columns:'Two columns',social:'Social icons',footer:'Footer'};
+  title.innerHTML=`<span class="tag">${b.type}</span> ${lbl[b.type]||b.type}`;
+  const p=b.props; let h='';
+  switch(b.type){
+    case 'logo':
+      h+=f('Image URL',inp('src',p.src,'url'));
+      h+=f('Width (px)',range('width',p.width,60,300,2,'px'));
+      h+=f('Alignment',align('align',p.align));
+      h+=f('Background',color('bg',p.bg));
+      h+=f('Padding (px)',range('pad',p.pad,0,60,2,'px'));
+      break;
+    case 'spacer':
+      h+=f('Height (px)',range('height',p.height,4,120,2,'px'));
+      h+=f('Background',color('bg',p.bg)); break;
+    case 'divider':
+      h+=f('Line colour',color('color',p.color));
+      h+=f('Thickness',range('thickness',p.thickness,1,8,1,'px'));
+      h+=f('Width (%)',range('width',p.width,20,100,5,'%'));
+      h+=f('Vertical padding',range('pad',p.pad,0,40,2,'px'));
+      h+=f('Background',color('bg',p.bg)); break;
+    case 'heading':
+      h+=f('Text',area('text',p.text));
+      h+=f('Level',sel('level',p.level,[['h1','H1 — Title'],['h2','H2 — Section'],['h3','H3 — Small']]));
+      h+=f('Font size',range('size',p.size,14,44,1,'px'));
+      h+=f('Weight',sel('weight',p.weight,[[400,'Regular'],[600,'Semibold'],[700,'Bold'],[800,'Extra bold']]));
+      h+=f('Colour',color('color',p.color));
+      h+=f('Alignment',align('align',p.align));
+      h+=f('Background',color('bg',p.bg)); break;
+    case 'text':
+      h+=f('Text',area('text',p.text));
+      h+=f('Font size',range('size',p.size,11,22,1,'px'));
+      h+=f('Line height',range('lh',p.lh,1.2,2.2,0.1));
+      h+=f('Colour',color('color',p.color));
+      h+=f('Alignment',align('align',p.align));
+      h+=f('Background',color('bg',p.bg)); break;
+    case 'button':
+      h+=f('Label',inp('label',p.label));
+      h+=f('Link URL',inp('href',p.href,'url','https://'));
+      h+='<div class="row2">'+f('Button colour',color('bg',p.bg))+f('Text colour',color('color',p.color))+'</div>';
+      h+=f('Corner radius',range('radius',p.radius,0,40,1,'px'));
+      h+='<div class="row2">'+f('Padding Y',range('padY',p.padY,6,24,1,'px'))+f('Padding X',range('padX',p.padX,12,50,1,'px'))+'</div>';
+      h+=f('Alignment',align('align',p.align));
+      h+=tog('fullWidth',p.fullWidth,'Full-width button');
+      h+=f('Animation',sel('anim',p.anim,[['none','None'],['pulse','Pulse (where supported)'],['fade','Fade in (where supported)']]));
+      h+=`<div class="hint warn">CSS animation plays in Apple Mail and most modern clients, and is ignored gracefully in Outlook — the button still shows perfectly.</div>`;
+      h+=f('Block background',color('blockBg',p.blockBg)); break;
+    case 'image':
+      h+=f('Image URL',inp('src',p.src,'url'));
+      h+=f('Alt text',inp('alt',p.alt));
+      h+=f('Link URL (optional)',inp('href',p.href,'url','https://'));
+      h+=f('Width (%)',range('width',p.width,20,100,5,'%'));
+      h+=f('Corner radius',range('radius',p.radius,0,30,1,'px'));
+      h+=f('Alignment',align('align',p.align));
+      h+=f('Padding',range('pad',p.pad,0,40,2,'px'));
+      h+=f('Background',color('bg',p.bg)); break;
+    case 'hero':
+      h+=f('Background image URL',inp('src',p.src,'url'));
+      h+=f('Headline',inp('headline',p.headline));
+      h+=f('Sub-text',area('sub',p.sub));
+      h+=f('Button label',inp('btnLabel',p.btnLabel));
+      h+=f('Button link',inp('btnHref',p.btnHref,'url','https://'));
+      h+=f('Text colour',color('textColor',p.textColor));
+      h+=f('Dark overlay',range('overlay',p.overlay,0,80,5,'%'));
+      h+='<div class="row2">'+f('Button bg',color('btnBg',p.btnBg))+f('Button text',color('btnColor',p.btnColor))+'</div>';
+      h+=f('Alignment',align('align',p.align));
+      h+=`<div class="hint warn">Text-over-image uses an overlay that always renders, but a few older clients ignore background positioning — preview before sending.</div>`;
+      break;
+    case 'imageButton':
+      h+=f('Image URL',inp('src',p.src,'url'));
+      h+=f('Button label',inp('btnLabel',p.btnLabel));
+      h+=f('Button link',inp('btnHref',p.btnHref,'url','https://'));
+      h+='<div class="row2">'+f('Button bg',color('btnBg',p.btnBg))+f('Button text',color('btnColor',p.btnColor))+'</div>';
+      h+=f('Corner radius',range('radius',p.radius,0,40,1,'px'));
+      h+=f('Vertical position',sel('posV',p.posV,[['top','Top'],['middle','Middle'],['bottom','Bottom']]));
+      h+=f('Horizontal position',align('posH',p.posH));
+      h+=`<div class="hint warn">The button sits over the image where clients allow it; Outlook drops it below the image as a safe fallback.</div>`;
+      break;
+    case 'gif':
+      h+=f('GIF URL',inp('src',p.src,'url'));
+      h+=f('Alt text',inp('alt',p.alt));
+      h+=f('Link URL (optional)',inp('href',p.href,'url','https://'));
+      h+=f('Width (%)',range('width',p.width,20,100,5,'%'));
+      h+=f('Alignment',align('align',p.align));
+      h+=f('Background',color('bg',p.bg));
+      h+=`<div class="hint warn">Outlook 2007–2019 shows only the first frame, so design a strong first frame.</div>`; break;
+    case 'video':
+      h+=f('Thumbnail URL',inp('thumb',p.thumb,'url'));
+      h+=f('Video link (YouTube/Vimeo)',inp('href',p.href,'url','https://'));
+      h+=f('Play button colour',color('playColor',p.playColor));
+      h+=f('Width (%)',range('width',p.width,30,100,5,'%'));
+      h+=f('Alignment',align('align',p.align));
+      h+=f('Background',color('bg',p.bg));
+      h+=`<div class="hint">Inline video plays only in Apple Mail. Everywhere else this opens the video link — the same approach Salesforce uses.</div>`; break;
+    case 'columns':
+      h+='<div class="insp-section" style="margin-top:0">Left column</div>';
+      h+=f('Image URL',inp('lImg',p.lImg,'url'));
+      h+=f('Title',inp('lTitle',p.lTitle));
+      h+=f('Text',area('lText',p.lText));
+      h+=f('Link (optional)',inp('lHref',p.lHref,'url'));
+      h+='<div class="insp-section">Right column</div>';
+      h+=f('Image URL',inp('rImg',p.rImg,'url'));
+      h+=f('Title',inp('rTitle',p.rTitle));
+      h+=f('Text',area('rText',p.rText));
+      h+=f('Link (optional)',inp('rHref',p.rHref,'url'));
+      h+='<div class="insp-section">Style</div>';
+      h+='<div class="row2">'+f('Title colour',color('titleColor',p.titleColor))+f('Text colour',color('textColor',p.textColor))+'</div>';
+      h+=f('Background',color('bg',p.bg));
+      h+=`<div class="hint">Columns stack vertically on mobile automatically.</div>`; break;
+    case 'social':
+      h+='<div class="insp-section" style="margin-top:0">Networks</div><div id="socialRows">'+p.items.map((it,i)=>socialRow(it,i)).join('')+'</div>';
+      h+=`<button class="btn btn-soft" style="width:100%;justify-content:center;margin-top:4px" onclick="addSocial()">+ Add network</button>`;
+      h+='<div class="insp-section">Style</div>';
+      h+=f('Icon colour',color('color',p.color));
+      h+=f('Icon size',range('size',p.size,16,40,2,'px'));
+      h+=f('Alignment',align('align',p.align));
+      h+=f('Padding',range('pad',p.pad,0,40,2,'px'));
+      h+=f('Background',color('bg',p.bg)); break;
+    case 'footer':
+      h+=f('Company name',inp('company',p.company));
+      h+=f('Address',inp('address',p.address));
+      h+=f('Compliance note',area('note',p.note));
+      h+=f('Unsubscribe text',inp('unsub',p.unsub));
+      h+=f('Unsubscribe link',inp('unsubHref',p.unsubHref,'url'));
+      h+=f('Text colour',color('color',p.color));
+      h+=f('Background',color('bg',p.bg));
+      h+=f('Font size',range('size',p.size,10,16,1,'px'));
+      h+=f('Padding',range('pad',p.pad,10,40,2,'px')); break;
+  }
+  body.innerHTML='<div class="insp-body">'+h+'</div>';
+}
+
+function socialRow(it,i){
+  const nets=['facebook','instagram','youtube','linkedin','twitter','whatsapp'];
+  return `<div style="display:flex;gap:6px;margin-bottom:7px;align-items:center">
+    <select onchange="setSocial(${i},'n',this.value)" style="flex:0 0 110px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:7px">
+      ${nets.map(n=>`<option value="${n}" ${it.n===n?'selected':''}>${n[0].toUpperCase()+n.slice(1)}</option>`).join('')}</select>
+    <input type="url" value="${esc(it.h)}" placeholder="https://" oninput="setSocial(${i},'h',this.value)" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:7px" />
+    <button class="btn-icon" style="border:none" onclick="rmSocial(${i})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>`;
+}
+function setSocial(i,k,v){ const b=doc.blocks.find(x=>x.id===selectedId); b.props.items[i][k]=v; renderCanvas(); save(); }
+function addSocial(){ const b=doc.blocks.find(x=>x.id===selectedId); b.props.items.push({n:'facebook',h:'https://'}); renderInspector(); renderCanvas(); save(); }
+function rmSocial(i){ const b=doc.blocks.find(x=>x.id===selectedId); b.props.items.splice(i,1); renderInspector(); renderCanvas(); save(); }
+
+/* ============================================================
+   EMAIL HTML EXPORT (table-based, inline CSS, Outlook-safe)
+   ============================================================ */
+function row(inner,bg){ return `<tr><td align="center" bgcolor="${bg||'#ffffff'}" style="background-color:${bg||'#ffffff'};padding:0">${inner}</td></tr>`; }
+
+function bulletproofButton(label,href,bg,color,radius,padY,padX,fullWidth,anim){
+  const animClass = anim&&anim!=='none' ? ` class="mc-${anim}"` : '';
+  const w = fullWidth ? 'width:100%;' : '';
+  // VML for Outlook + standard anchor for everyone else
+  return `<!--[if mso]>
+  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${href}" style="height:${padY*2+20}px;v-text-anchor:middle;width:${fullWidth?'100%':'auto'};" arcsize="${Math.round(radius/2)}%" stroke="f" fillcolor="${bg}">
+  <w:anchorlock/><center style="color:${color};font-family:sans-serif;font-size:14px;font-weight:bold;">${label}</center>
+  </v:roundrect>
+  <![endif]-->
+  <!--[if !mso]><!-- -->
+  <a href="${href}"${animClass} target="_blank" style="${w}background-color:${bg};color:${color};display:inline-block;font-size:14px;font-weight:600;line-height:1;padding:${padY}px ${padX}px;text-decoration:none;border-radius:${radius}px;mso-padding-alt:0;text-align:center;">${label}</a>
+  <!--<![endif]-->`;
+}
+
+function blockToEmail(b){
+  const p=b.props; const F=settings.font;
+  switch(b.type){
+    case 'logo':
+      return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px"><img src="${p.src}" width="${p.width}" alt="logo" style="display:block;border:0;width:${p.width}px;max-width:100%;margin:${p.align==='center'?'0 auto':'0'}"/></td></tr></table>`, p.bg);
+    case 'spacer':
+      return row(`<div style="line-height:${p.height}px;height:${p.height}px;font-size:1px">&nbsp;</div>`, p.bg);
+    case 'divider':
+      return row(`<table role="presentation" width="100%"><tr><td style="padding:${p.pad}px 28px"><table role="presentation" width="${p.width}%" align="center"><tr><td style="border-top:${p.thickness}px solid ${p.color};font-size:1px;line-height:1px">&nbsp;</td></tr></table></td></tr></table>`, p.bg);
+    case 'heading':{
+      const sz=p.size; const pad=padCss(p.pad).replace(/px/g,'px');
+      return row(`<div style="font-family:${F};font-size:${sz}px;font-weight:${p.weight};line-height:1.25;color:${p.color};text-align:${p.align};padding:${pad}">${esc(p.text)}</div>`, p.bg);
+    }
+    case 'text':
+      return row(`<div style="font-family:${F};font-size:${p.size}px;line-height:${p.lh};color:${p.color};text-align:${p.align};padding:${padCss(p.pad)}">${esc(p.text).replace(/\n/g,'<br>')}</div>`, p.bg);
+    case 'button':
+      return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${padCss(p.pad)}">${bulletproofButton(esc(p.label),p.href,p.bg,p.color,p.radius,p.padY,p.padX,p.fullWidth,p.anim)}</td></tr></table>`, p.blockBg);
+    case 'image':{
+      const img=`<img src="${p.src}" alt="${esc(p.alt)}" width="${Math.round(600*p.width/100)}" style="display:block;border:0;width:${p.width}%;max-width:100%;border-radius:${p.radius}px;margin:${p.align==='center'?'0 auto':p.align==='right'?'0 0 0 auto':'0'}"/>`;
+      const wrapped=p.href?`<a href="${p.href}" target="_blank">${img}</a>`:img;
+      return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px">${wrapped}</td></tr></table>`, p.bg);
+    }
+    case 'hero':
+      // image + caption stacked (most compatible "image+text"): image, then overlay-styled text band
+      return row(`<table role="presentation" width="100%">
+        <tr><td style="padding:0"><img src="${p.src}" alt="${esc(p.headline)}" width="600" style="display:block;border:0;width:100%;border-radius:${p.radius}px ${p.radius}px 0 0"/></td></tr>
+        <tr><td style="background-color:#1B1B2A;padding:22px;text-align:${p.align}">
+          <div style="font-family:${F};font-size:24px;font-weight:800;color:#ffffff;line-height:1.25;margin-bottom:8px">${esc(p.headline)}</div>
+          <div style="font-family:${F};font-size:14px;color:#d9d9e8;line-height:1.5;margin-bottom:16px">${esc(p.sub)}</div>
+          ${bulletproofButton(esc(p.btnLabel),p.btnHref,p.btnBg,p.btnColor,p.radius,11,24,false,'none')}
+        </td></tr></table>`, '#ffffff');
+    case 'imageButton':{
+      // image then button beneath — universally safe stack representing "button on image"
+      const jv=p.posH;
+      return row(`<table role="presentation" width="100%">
+        <tr><td style="padding:0"><img src="${p.src}" alt="${esc(p.btnLabel)}" width="600" style="display:block;border:0;width:100%"/></td></tr>
+        <tr><td align="${jv}" style="padding:16px 20px;background-color:${p.bg}">${bulletproofButton(esc(p.btnLabel),p.btnHref,p.btnBg,p.btnColor,p.radius,12,28,false,'none')}</td></tr>
+      </table>`, p.bg);
+    }
+    case 'gif':{
+      const img=`<img src="${p.src}" alt="${esc(p.alt)}" width="${Math.round(600*p.width/100)}" style="display:block;border:0;width:${p.width}%;max-width:100%;margin:${p.align==='center'?'0 auto':'0'}"/>`;
+      const wrapped=p.href?`<a href="${p.href}" target="_blank">${img}</a>`:img;
+      return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px">${wrapped}</td></tr></table>`, p.bg);
+    }
+    case 'video':
+      return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px">
+        <a href="${p.href}" target="_blank" style="display:inline-block;position:relative;text-decoration:none">
+          <img src="${p.thumb}" alt="Play video" width="${Math.round(600*p.width/100)}" style="display:block;border:0;width:${p.width}%;max-width:100%"/>
+        </a>
+        <div style="font-family:${F};font-size:12px;color:#888;margin-top:6px">▶ Watch the video</div>
+      </td></tr></table>`, p.bg);
+    case 'columns':{
+      const colCell=(s)=>`<table role="presentation" width="100%"><tr><td style="padding:8px">
+        ${p[s+'Href']?`<a href="${p[s+'Href']}" target="_blank">`:''}
+        <img src="${p[s+'Img']}" width="270" alt="${esc(p[s+'Title'])}" style="display:block;border:0;width:100%;border-radius:6px;margin-bottom:10px"/>
+        ${p[s+'Href']?'</a>':''}
+        <div style="font-family:${F};font-size:16px;font-weight:700;color:${p.titleColor};margin-bottom:5px">${esc(p[s+'Title'])}</div>
+        <div style="font-family:${F};font-size:13px;line-height:1.5;color:${p.textColor}">${esc(p[s+'Text'])}</div>
+      </td></tr></table>`;
+      return row(`<table role="presentation" width="100%" style="padding:${padCss(p.pad)}"><tr>
+        <td class="mc-col" width="50%" valign="top">${colCell('l')}</td>
+        <td class="mc-col" width="50%" valign="top">${colCell('r')}</td>
+      </tr></table>`, p.bg);
+    }
+    case 'social':
+      return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px">
+        ${p.items.map(it=>`<a href="${it.h}" target="_blank" style="display:inline-block;margin:0 6px;text-decoration:none">${socialIcon(it.n,p.color,p.size)}</a>`).join('')}
+      </td></tr></table>`, p.bg);
+    case 'footer':
+      return row(`<table role="presentation" width="100%"><tr><td align="center" style="padding:${p.pad}px;font-family:${F};font-size:${p.size}px;line-height:1.7;color:${p.color}">
+        <div style="font-weight:700;margin-bottom:4px">${esc(p.company)}</div>
+        <div>${esc(p.address)}</div>
+        <div style="margin-top:6px">${esc(p.note)}</div>
+        <div style="margin-top:8px"><a href="${p.unsubHref}" style="color:${p.color};text-decoration:underline">${esc(p.unsub)}</a></div>
+      </td></tr></table>`, p.bg);
+  }
+  return '';
+}
+
+function generateEmailHTML(forSend){
+  const F=settings.font;
+  const pre=document.getElementById('preheader')?.value||'';
+  const bodyRows=doc.blocks.map(blockToEmail).join('\n');
+  const styleBlock=`<style>
+    @media only screen and (max-width:620px){
+      .mc-container{width:100%!important}
+      .mc-col{display:block!important;width:100%!important}
+      img{max-width:100%!important;height:auto!important}
+    }
+    @keyframes mcpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+    @keyframes mcfade{from{opacity:0}to{opacity:1}}
+    .mc-pulse{animation:mcpulse 1.8s ease-in-out infinite}
+    .mc-fade{animation:mcfade 1s ease both}
+    a{text-decoration:none}
+  </style>`;
+  return `<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<title>${esc(doc.name)}</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+${styleBlock}
+</head>
+<body style="margin:0;padding:0;background-color:#E7E6E1;font-family:${F}">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(pre)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#E7E6E1">
+  <tr><td align="center" style="padding:24px 12px">
+    <table role="presentation" class="mc-container" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background-color:#ffffff;border-radius:8px;overflow:hidden">
+      ${bodyRows}
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
+}
+
+/* ============================================================
+   Preview / Export
+   ============================================================ */
+function openPreview(){
+  document.getElementById('previewOverlay').classList.add('show');
+  const frame=document.getElementById('previewFrame');
+  frame.srcdoc=generateEmailHTML(false);
+}
+function openExport(){
+  document.getElementById('exportOverlay').classList.add('show');
+  document.getElementById('exportCode').textContent=generateEmailHTML(false);
+}
+function copyHTML(){
+  navigator.clipboard.writeText(generateEmailHTML(false)).then(()=>toast('HTML copied to clipboard'));
+}
+function downloadHTML(){
+  const blob=new Blob([generateEmailHTML(false)],{type:'text/html'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=(doc.name||'email').replace(/\s+/g,'_')+'.html'; a.click();
+  toast('HTML file downloaded');
+}
+
+/* ============================================================
+   Send
+   ============================================================ */
+function openSend(){
+  loadSettings();
+  document.getElementById('fromName').value=settings.fromName||'';
+  document.getElementById('sendOverlay').classList.add('show');
+  document.getElementById('sendConfigNote').style.display=settings.url?'none':'flex';
+}
+function recipKey(e){
+  if(e.key==='Enter'||e.key===','){ e.preventDefault(); addRecip(); }
+}
+function addRecip(){
+  const inp=document.getElementById('recipInput'); const v=inp.value.trim().replace(/,$/,'');
+  if(v && /\S+@\S+\.\S+/.test(v) && !recipients.includes(v)){ recipients.push(v); inp.value=''; renderRecips(); }
+}
+function renderRecips(){
+  document.getElementById('recipChips').innerHTML=recipients.map((r,i)=>
+    `<span class="chip">${esc(r)}<button onclick="recipients.splice(${i},1);renderRecips()"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`).join('');
+}
+function sendStatus(msg,ok){
+  const el=document.getElementById('sendStatus');
+  el.textContent=msg; el.className='status-msg show '+(ok?'ok':'err');
+}
+async function postSend(to,subject){
+  const payload={ token:settings.token, to:to.join(','), subject, html:generateEmailHTML(true),
+    fromName:document.getElementById('fromName').value||'', replyTo:document.getElementById('replyTo').value||'' };
+  const res=await fetch(settings.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  return res.json();
+}
+async function sendEmail(){
+  addRecip();
+  if(!settings.url){ sendStatus('Add your Apps Script URL in Settings first.',false); return; }
+  if(!recipients.length){ sendStatus('Add at least one recipient.',false); return; }
+  const subject=document.getElementById('subjectLine').value.trim();
+  if(!subject){ sendStatus('Add a subject line.',false); return; }
+  const btn=document.getElementById('sendBtn'); btn.textContent='Sending…'; btn.disabled=true;
+  try{
+    const r=await postSend(recipients,subject);
+    if(r.ok){ sendStatus('Sent to '+recipients.length+' recipient(s). ✓',true); toast('Email sent'); }
+    else sendStatus('Send failed: '+(r.error||'unknown error'),false);
+  }catch(err){ sendStatus('Network error — check the Web App URL and that it is deployed for "Anyone".',false); }
+  btn.textContent='Send now'; btn.disabled=false;
+}
+async function sendTest(){
+  if(!settings.url){ sendStatus('Add your Apps Script URL in Settings first.',false); return; }
+  if(!settings.myEmail){ sendStatus('Add your own email in Settings for test sends.',false); return; }
+  const subject='[TEST] '+(document.getElementById('subjectLine').value||doc.name);
+  try{
+    const r=await postSend([settings.myEmail],subject);
+    if(r.ok){ sendStatus('Test sent to '+settings.myEmail+' ✓',true); toast('Test sent'); }
+    else sendStatus('Test failed: '+(r.error||'unknown'),false);
+  }catch(err){ sendStatus('Network error during test send.',false); }
+}
+
+/* ============================================================
+   Settings
+   ============================================================ */
+function openSettings(){
+  loadSettings();
+  document.getElementById('setUrl').value=settings.url;
+  document.getElementById('setToken').value=settings.token;
+  document.getElementById('setMyEmail').value=settings.myEmail;
+  document.getElementById('setBrandColor').value=settings.brandColor;
+  document.getElementById('setBrandColorHex').value=settings.brandColor;
+  document.getElementById('setBtnRadius').value=settings.btnRadius;
+  document.getElementById('setLogo').value=settings.logo;
+  document.getElementById('setFont').value=settings.font;
+  document.getElementById('settingsOverlay').classList.add('show');
+}
+document.addEventListener('input',e=>{
+  if(e.target.id==='setBrandColor') document.getElementById('setBrandColorHex').value=e.target.value;
+  if(e.target.id==='setBrandColorHex') document.getElementById('setBrandColor').value=e.target.value;
+});
+function saveSettings(){
+  settings.url=document.getElementById('setUrl').value.trim();
+  settings.token=document.getElementById('setToken').value.trim();
+  settings.myEmail=document.getElementById('setMyEmail').value.trim();
+  settings.brandColor=document.getElementById('setBrandColorHex').value.trim()||'#5B5BD6';
+  settings.btnRadius=+document.getElementById('setBtnRadius').value||8;
+  settings.logo=document.getElementById('setLogo').value.trim();
+  settings.font=document.getElementById('setFont').value;
+  localStorage.setItem(SET_KEY,JSON.stringify(settings));
+  closeModal('settingsOverlay'); toast('Settings saved');
+}
+function loadSettings(){
+  try{ const s=JSON.parse(localStorage.getItem(SET_KEY)); if(s) settings={...settings,...s}; }catch(e){}
+}
+
+/* ============================================================
+   Persistence + templates
+   ============================================================ */
+function save(){ doc.name=document.getElementById('docName').value; localStorage.setItem(STORE_KEY,JSON.stringify(doc)); }
+function load(){
+  try{ const d=JSON.parse(localStorage.getItem(STORE_KEY)); if(d&&d.blocks){ doc=d; document.getElementById('docName').value=d.name||'Untitled email'; } }catch(e){}
+}
+function getTemplates(){ try{ return JSON.parse(localStorage.getItem(TPL_KEY))||[]; }catch(e){ return []; } }
+function openTemplates(){
+  const list=getTemplates();
+  document.getElementById('tplList').innerHTML=list.length?list.map((t,i)=>
+    `<div class="tpl-item"><div class="tpl-meta"><b>${esc(t.name)}</b><small>${t.blocks.length} blocks · ${new Date(t.ts).toLocaleDateString()}</small></div>
+    <div class="tpl-acts"><button class="btn btn-soft" onclick="loadTemplate(${i})">Open</button><button class="btn-icon" onclick="delTemplate(${i})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div></div>`).join('')
+    :'<div style="color:var(--ink-3);font-size:12px;padding:6px 2px">No saved designs yet.</div>';
+  renderStarters();
+  document.getElementById('templatesOverlay').classList.add('show');
+}
+function saveTemplate(){
+  const name=document.getElementById('tplName').value.trim()||doc.name||'Untitled';
+  const list=getTemplates(); list.unshift({name,ts:Date.now(),blocks:JSON.parse(JSON.stringify(doc.blocks))});
+  localStorage.setItem(TPL_KEY,JSON.stringify(list)); document.getElementById('tplName').value='';
+  openTemplates(); toast('Template saved');
+}
+function loadTemplate(i){ const t=getTemplates()[i]; doc.blocks=JSON.parse(JSON.stringify(t.blocks)); doc.name=t.name; document.getElementById('docName').value=t.name; selectedId=null; renderCanvas(); renderInspector(); save(); closeModal('templatesOverlay'); toast('Template loaded'); }
+function delTemplate(i){ const list=getTemplates(); list.splice(i,1); localStorage.setItem(TPL_KEY,JSON.stringify(list)); openTemplates(); }
+function exportJSON(){ const blob=new Blob([JSON.stringify(doc,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(doc.name||'email').replace(/\s+/g,'_')+'.json'; a.click(); toast('Design exported'); }
+function importJSON(e){ const file=e.target.files[0]; if(!file)return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.blocks){ doc=d; document.getElementById('docName').value=d.name||'Imported'; selectedId=null; renderCanvas(); renderInspector(); save(); closeModal('templatesOverlay'); toast('Design imported'); } }catch(err){ toast('Invalid file'); } }; r.readAsText(file); e.target.value=''; }
+
+/* starter layouts */
+const STARTERS={
+  'Newsletter':['logo','heading','text','image','text','button','divider','social','footer'],
+  'Product launch':['logo','hero','text','imageButton','columns','button','footer'],
+  'Event invite':['logo','image','heading','text','button','divider','footer'],
+  'Promo / sale':['logo','gif','heading','text','button','social','footer']
+};
+function renderStarters(){
+  document.getElementById('starterList').innerHTML=Object.keys(STARTERS).map(k=>
+    `<div class="tpl-item"><div class="tpl-meta"><b>${k}</b><small>${STARTERS[k].length} blocks</small></div>
+    <button class="btn btn-soft" onclick="loadStarter('${k}')">Use</button></div>`).join('');
+}
+function loadStarter(k){
+  doc.blocks=STARTERS[k].map(type=>({id:'b'+Date.now()+Math.floor(Math.random()*9999),type,props:defaultBlock(type)}));
+  doc.name=k; document.getElementById('docName').value=k; selectedId=null;
+  renderCanvas(); renderInspector(); save(); closeModal('templatesOverlay'); toast(k+' layout loaded');
+}
+
+/* ============================================================
+   misc
+   ============================================================ */
+function setView(v){ view=v; document.getElementById('vwDesktop').classList.toggle('on',v==='desktop'); document.getElementById('vwMobile').classList.toggle('on',v==='mobile'); renderCanvas(); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function toast(msg){ const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('show'); }));
+document.getElementById('docName').addEventListener('input',save);
+
+/* init */
+loadSettings(); load(); renderLibrary(); renderCanvas(); renderInspector();
+</script>
+</body>
+</html>

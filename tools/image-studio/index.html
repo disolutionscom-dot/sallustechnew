@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SallusTech Image Studio — Background remover & image tools</title>
+<meta name="description" content="Remove backgrounds, compress, resize, convert, crop and edit images right in your browser. Free, private, no upload. By SallusTech." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E1525;
+    --ink-2:#2A3242;
+    --muted:#6B7385;
+    --line:#E5E8F0;
+    --surface:#FFFFFF;
+    --canvas:#F4F6FB;
+    --violet:#6D5EF7;
+    --violet-d:#5848e6;
+    --coral:#FF6B5B;
+    --teal:#16C79A;
+    --amber:#F6A609;
+    --sky:#3B9EFF;
+    --rose:#F4628C;
+    --check-a:#E3E7F0;
+    --check-b:#FFFFFF;
+    --radius:16px;
+    --radius-sm:11px;
+    --shadow-sm:0 1px 2px rgba(14,21,37,.06), 0 1px 1px rgba(14,21,37,.04);
+    --shadow-md:0 8px 30px rgba(14,21,37,.10);
+    --shadow-lg:0 24px 60px rgba(14,21,37,.16);
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Inter",system-ui,-apple-system,sans-serif;
+    color:var(--ink);
+    background:var(--canvas);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace;}
+  h1,h2,h3,.display{font-family:"Space Grotesk",sans-serif;letter-spacing:-.02em;}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;}
+  img{max-width:100%;display:block;}
+
+  /* ---------- checkerboard signature ---------- */
+  .checker{
+    background-image:
+      linear-gradient(45deg, var(--check-a) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--check-a) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--check-a) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--check-a) 75%);
+    background-size:18px 18px;
+    background-position:0 0,0 9px,9px -9px,-9px 0;
+    background-color:var(--check-b);
+  }
+
+  /* ---------- layout ---------- */
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px;}
+
+  header.site{
+    position:sticky;top:0;z-index:40;
+    background:rgba(244,246,251,.82);
+    backdrop-filter:saturate(180%) blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;height:66px;}
+  .brand{display:flex;align-items:center;gap:11px;cursor:pointer;}
+  .logomark{
+    width:34px;height:34px;border-radius:9px;position:relative;overflow:hidden;
+    box-shadow:0 2px 8px rgba(109,94,247,.35);
+    flex:none;
+  }
+  .logomark .lm-fill{position:absolute;inset:0;background:linear-gradient(135deg,var(--violet),var(--coral));}
+  .logomark .lm-cut{
+    position:absolute;inset:0;
+    -webkit-mask:radial-gradient(circle at 70% 72%, transparent 0 8px, #000 9px);
+            mask:radial-gradient(circle at 70% 72%, transparent 0 8px, #000 9px);
+  }
+  .logomark .lm-check{position:absolute;inset:0;opacity:.0;}
+  .brand-name{font-family:"Space Grotesk";font-weight:700;font-size:18px;letter-spacing:-.01em;}
+  .brand-name .dim{color:var(--muted);font-weight:500;}
+  .nav-actions{display:flex;align-items:center;gap:8px;}
+  .nav-pill{font-size:13px;color:var(--muted);padding:8px 12px;border-radius:9px;font-weight:500;}
+  .nav-pill:hover{color:var(--ink);background:rgba(14,21,37,.05);}
+  .btn-ghost{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 15px;font-weight:600;font-size:14px;color:var(--ink);box-shadow:var(--shadow-sm);transition:.18s var(--ease);}
+  .btn-ghost:hover{border-color:#cfd5e6;transform:translateY(-1px);}
+
+  /* ---------- hero ---------- */
+  .hero{padding:54px 0 30px;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:"JetBrains Mono";font-size:12px;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--violet);background:rgba(109,94,247,.10);
+    padding:6px 12px;border-radius:999px;font-weight:500;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 3px rgba(22,199,154,.18);}
+  .hero h1{
+    font-size:clamp(34px,5.4vw,58px);line-height:1.02;margin:20px 0 14px;font-weight:700;
+    max-width:14ch;
+  }
+  .hero h1 .grad{background:linear-gradient(105deg,var(--violet),var(--coral));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .hero p.lede{font-size:clamp(16px,2vw,19px);color:var(--ink-2);max-width:52ch;margin:0 0 26px;}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:34px;align-items:center;}
+
+  /* hero drop card */
+  .drop-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:22px;
+    box-shadow:var(--shadow-lg);padding:18px;position:relative;
+  }
+  .drop-card .tag{
+    position:absolute;top:-13px;left:22px;background:var(--coral);color:#fff;
+    font-family:"JetBrains Mono";font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    padding:5px 11px;border-radius:999px;font-weight:500;box-shadow:0 6px 16px rgba(255,107,91,.4);
+  }
+  .dz{
+    border:2px dashed #cfd5e8;border-radius:16px;min-height:268px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+    text-align:center;padding:26px;transition:.2s var(--ease);position:relative;overflow:hidden;
+  }
+  .dz:hover,.dz.drag{border-color:var(--violet);background:rgba(109,94,247,.04);}
+  .dz .reveal{
+    position:absolute;inset:14px;border-radius:12px;opacity:.5;
+    background-image:
+      linear-gradient(45deg, var(--check-a) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--check-a) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--check-a) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--check-a) 75%);
+    background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;
+    -webkit-mask:linear-gradient(#000,#000);pointer-events:none;
+    animation:none;
+  }
+  .dz .dz-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .dz .icon-cloud{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,var(--violet),var(--violet-d));display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 10px 24px rgba(109,94,247,.36);}
+  .dz h3{font-size:19px;margin:0;font-weight:600;}
+  .dz p{margin:0;color:var(--muted);font-size:13.5px;}
+  .btn-primary{
+    background:linear-gradient(135deg,var(--violet),var(--violet-d));color:#fff;
+    border-radius:12px;padding:13px 24px;font-weight:600;font-size:15px;
+    box-shadow:0 10px 24px rgba(109,94,247,.34);transition:.18s var(--ease);
+    display:inline-flex;align-items:center;gap:9px;
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 30px rgba(109,94,247,.42);}
+  .btn-primary:active{transform:translateY(0);}
+  .btn-primary[disabled]{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;}
+  .dz small{color:#9aa1b4;font-size:12px;font-family:"JetBrains Mono";}
+
+  .hero-copy .stats{display:flex;gap:26px;margin-top:8px;flex-wrap:wrap;}
+  .stat .n{font-family:"Space Grotesk";font-weight:700;font-size:24px;}
+  .stat .l{font-size:12.5px;color:var(--muted);font-family:"JetBrains Mono";letter-spacing:.02em;}
+  .trust{display:flex;gap:18px;margin-top:24px;flex-wrap:wrap;}
+  .trust span{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2);font-weight:500;}
+  .trust svg{color:var(--teal);}
+
+  /* ---------- tools section ---------- */
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin:18px 0 22px;gap:20px;flex-wrap:wrap;}
+  .section-head h2{font-size:clamp(24px,3vw,32px);margin:0;font-weight:700;}
+  .section-head p{margin:6px 0 0;color:var(--muted);font-size:15px;}
+  .cat-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .cat-tab{font-size:13.5px;font-weight:600;color:var(--muted);padding:8px 14px;border-radius:999px;border:1px solid transparent;transition:.16s var(--ease);}
+  .cat-tab:hover{color:var(--ink);}
+  .cat-tab.active{background:var(--ink);color:#fff;}
+
+  .tools-section{padding:14px 0 60px;}
+  .tool-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .tool-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px;cursor:pointer;transition:.2s var(--ease);position:relative;overflow:hidden;
+    box-shadow:var(--shadow-sm);text-align:left;display:flex;flex-direction:column;gap:13px;min-height:152px;
+  }
+  .tool-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:#d7dcec;}
+  .tool-card:focus-visible{outline:3px solid var(--violet);outline-offset:2px;}
+  .tool-ico{
+    width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+    color:#fff;flex:none;box-shadow:0 6px 14px rgba(14,21,37,.14);
+  }
+  .tool-card h3{font-size:16px;margin:0;font-weight:600;}
+  .tool-card p{margin:0;font-size:13px;color:var(--muted);line-height:1.45;}
+  .tool-card .badge{
+    position:absolute;top:14px;right:14px;font-family:"JetBrains Mono";font-size:10px;letter-spacing:.05em;
+    text-transform:uppercase;color:var(--coral);background:rgba(255,107,91,.12);padding:3px 8px;border-radius:6px;font-weight:500;
+  }
+  .tool-card .go{margin-top:auto;font-size:13px;font-weight:600;color:var(--violet);display:inline-flex;align-items:center;gap:5px;opacity:0;transform:translateX(-4px);transition:.18s var(--ease);}
+  .tool-card:hover .go{opacity:1;transform:translateX(0);}
+
+  /* ---------- how it works ---------- */
+  .strip{background:var(--ink);color:#fff;border-radius:24px;padding:40px;margin:0 0 60px;position:relative;overflow:hidden;}
+  .strip .checker-bg{position:absolute;inset:0;opacity:.04;
+    background-image:linear-gradient(45deg,#fff 25%,transparent 25%),linear-gradient(-45deg,#fff 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#fff 75%),linear-gradient(-45deg,transparent 75%,#fff 75%);
+    background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0;}
+  .strip-inner{position:relative;z-index:1;}
+  .strip h2{color:#fff;font-size:28px;margin:0 0 28px;}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;}
+  .step .num{font-family:"JetBrains Mono";font-size:13px;color:var(--violet);font-weight:500;}
+  .step h4{font-family:"Space Grotesk";font-size:18px;margin:8px 0 6px;font-weight:600;}
+  .step p{margin:0;color:#aab2c6;font-size:14px;}
+
+  footer.site{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-size:13.5px;}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;}
+  .foot .links{display:flex;gap:18px;flex-wrap:wrap;}
+  .foot a:hover{color:var(--ink);}
+
+  /* ---------- workspace (tool view) ---------- */
+  .view{display:none;}
+  .view.active{display:block;animation:fade .3s var(--ease);}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  .ws-top{display:flex;align-items:center;gap:14px;padding:22px 0 4px;}
+  .back-btn{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:14px;color:var(--ink-2);padding:9px 13px;border-radius:10px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow-sm);transition:.16s var(--ease);}
+  .back-btn:hover{transform:translateX(-2px);border-color:#cfd5e6;}
+  .ws-title{display:flex;align-items:center;gap:13px;}
+  .ws-title .tool-ico{width:40px;height:40px;border-radius:11px;}
+  .ws-title h2{font-size:23px;margin:0;}
+  .ws-title p{margin:1px 0 0;color:var(--muted);font-size:13.5px;}
+
+  .ws-body{display:grid;grid-template-columns:1fr 340px;gap:22px;padding:18px 0 70px;align-items:start;}
+  .stage{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    min-height:440px;box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;
+  }
+  .stage-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);font-family:"JetBrains Mono";min-height:46px;}
+  .stage-head .seg{display:flex;gap:4px;background:var(--canvas);border-radius:9px;padding:3px;}
+  .stage-head .seg button{font-size:12px;padding:5px 11px;border-radius:7px;color:var(--muted);font-weight:600;font-family:"Inter";}
+  .stage-head .seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm);}
+  .stage-canvas{flex:1;display:flex;align-items:center;justify-content:center;padding:22px;position:relative;min-height:360px;}
+  .stage-canvas img,.stage-canvas canvas{max-width:100%;max-height:520px;border-radius:8px;box-shadow:0 6px 22px rgba(14,21,37,.12);}
+  .stage-canvas.show-checker{
+    background-image:
+      linear-gradient(45deg, var(--check-a) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--check-a) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--check-a) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--check-a) 75%);
+    background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0;background-color:var(--check-b);
+  }
+
+  /* in-stage dropzone */
+  .stage-dz{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:40px;margin:18px;border:2px dashed #cfd5e8;border-radius:14px;transition:.2s var(--ease);}
+  .stage-dz.drag{border-color:var(--violet);background:rgba(109,94,247,.05);}
+  .stage-dz .icon-cloud{width:54px;height:54px;}
+
+  /* controls panel */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);position:sticky;top:84px;}
+  .panel-head{padding:16px 18px;border-bottom:1px solid var(--line);}
+  .panel-head h3{font-size:15px;margin:0;font-weight:600;}
+  .panel-head p{font-size:12.5px;color:var(--muted);margin:3px 0 0;}
+  .panel-body{padding:18px;display:flex;flex-direction:column;gap:18px;}
+  .ctl label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:8px;}
+  .ctl .hint{font-size:11.5px;color:var(--muted);font-weight:400;font-family:"JetBrains Mono";}
+  .field{display:flex;align-items:center;gap:8px;}
+  input[type="text"],input[type="number"],select{
+    width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;font-family:"Inter";color:var(--ink);background:var(--surface);transition:.14s var(--ease);
+  }
+  input:focus,select:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px rgba(109,94,247,.16);}
+  input[type="range"]{width:100%;accent-color:var(--violet);}
+  .range-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .range-row .val{font-family:"JetBrains Mono";font-size:13px;color:var(--violet);font-weight:500;}
+  .seg-ctl{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--ink-2);background:var(--surface);transition:.14s var(--ease);}
+  .chip:hover{border-color:#cfd5e6;}
+  .chip.active{background:var(--violet);border-color:var(--violet);color:#fff;}
+  .toggle{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--ink-2);}
+  .toggle input{appearance:none;width:38px;height:22px;border-radius:999px;background:#d7dce8;position:relative;transition:.18s;flex:none;}
+  .toggle input:checked{background:var(--violet);}
+  .toggle input::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+  .toggle input:checked::after{left:18px;}
+
+  .panel-foot{padding:16px 18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px;}
+  .btn-block{width:100%;justify-content:center;}
+  .btn-soft{border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:11px;font-weight:600;font-size:14px;color:var(--ink-2);transition:.14s var(--ease);width:100%;}
+  .btn-soft:hover{border-color:#cfd5e6;background:var(--canvas);}
+
+  .meta-list{display:flex;flex-direction:column;gap:7px;font-family:"JetBrains Mono";font-size:12px;}
+  .meta-list .row{display:flex;justify-content:space-between;color:var(--muted);}
+  .meta-list .row b{color:var(--ink);font-weight:500;}
+  .delta-good{color:var(--teal)!important;}
+
+  /* processing overlay */
+  .proc{position:absolute;inset:0;background:rgba(255,255,255,.82);backdrop-filter:blur(3px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:5;border-radius:var(--radius);}
+  .spinner{width:46px;height:46px;border-radius:50%;border:4px solid rgba(109,94,247,.18);border-top-color:var(--violet);animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .proc .pmsg{font-weight:600;font-size:15px;color:var(--ink);}
+  .proc .psub{font-size:12.5px;color:var(--muted);font-family:"JetBrains Mono";}
+  .pbar{width:200px;height:6px;border-radius:99px;background:var(--line);overflow:hidden;}
+  .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--violet),var(--coral));transition:width .25s var(--ease);}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:13px 20px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:80;display:flex;align-items:center;gap:9px;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.err{background:#C0392B;}
+
+  /* selection overlay (crop / blur) */
+  .sel-wrap{position:relative;display:inline-block;line-height:0;}
+  .sel-box{position:absolute;border:2px solid var(--violet);box-shadow:0 0 0 9999px rgba(14,21,37,.45);cursor:move;}
+  .sel-box .handle{position:absolute;width:13px;height:13px;background:#fff;border:2px solid var(--violet);border-radius:3px;}
+  .sel-box .h-nw{top:-7px;left:-7px;cursor:nwse-resize;}
+  .sel-box .h-ne{top:-7px;right:-7px;cursor:nesw-resize;}
+  .sel-box .h-sw{bottom:-7px;left:-7px;cursor:nesw-resize;}
+  .sel-box .h-se{bottom:-7px;right:-7px;cursor:nwse-resize;}
+
+  .empty-note{color:var(--muted);font-size:13px;text-align:center;padding:8px 0;}
+
+  @media (max-width:980px){
+    .hero-grid{grid-template-columns:1fr;gap:24px;}
+    .tool-grid{grid-template-columns:repeat(2,1fr);}
+    .ws-body{grid-template-columns:1fr;}
+    .panel{position:static;}
+    .steps{grid-template-columns:1fr;gap:20px;}
+  }
+  @media (max-width:560px){
+    .tool-grid{grid-template-columns:1fr;}
+    .strip{padding:28px 22px;}
+    .nav-pill{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001ms!important;transition-duration:.001ms!important;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap nav">
+    <div class="brand" id="brandHome" role="button" tabindex="0" aria-label="SallusTech home">
+      <div class="logomark">
+        <div class="lm-fill"></div>
+        <div class="lm-check checker"></div>
+        <div class="lm-cut"></div>
+      </div>
+      <div class="brand-name">SallusTech <span class="dim">Studio</span></div>
+    </div>
+    <nav class="nav-actions">
+      <a class="nav-pill" id="navTools">All tools</a>
+      <a class="nav-pill" id="navHow">How it works</a>
+      <button class="btn-ghost" id="navStart">Start editing</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HOME VIEW ============ -->
+<main id="viewHome" class="view active">
+  <section class="hero wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="dot"></span> Runs in your browser · nothing uploaded</span>
+        <h1>Remove image backgrounds and <span class="grad">edit photos</span> in seconds.</h1>
+        <p class="lede">A full image toolkit on sallustech.store — strip backgrounds with AI, then compress, resize, convert, crop and finish your images. Every operation happens on your device, so your files stay private.</p>
+        <div class="trust">
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> 100% in-browser</span>
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> No sign-up</span>
+          <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg> Free to use</span>
+        </div>
+        <div class="stats" style="margin-top:26px">
+          <div class="stat"><div class="n" id="statTools">11</div><div class="l">image tools</div></div>
+          <div class="stat"><div class="n">0</div><div class="l">files uploaded</div></div>
+          <div class="stat"><div class="n">AI</div><div class="l">background cut-out</div></div>
+        </div>
+      </div>
+
+      <div class="drop-card">
+        <div class="tag">Most used · Remove background</div>
+        <div class="dz" id="heroDz">
+          <div class="reveal"></div>
+          <div class="dz-inner">
+            <div class="icon-cloud">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 13v8M8 17l4 4 4-4"/><path d="M20 16.6A5 5 0 0 0 18 7h-1.3A8 8 0 1 0 4 15"/></svg>
+            </div>
+            <h3>Drop an image to cut out the background</h3>
+            <p>JPG, PNG or WebP — or pick a file from your device</p>
+            <button class="btn-primary" id="heroPick">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Select image
+            </button>
+            <small>Your photo never leaves this page</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tools-section wrap" id="toolsSection">
+    <div class="section-head">
+      <div>
+        <h2>Every tool you need for images</h2>
+        <p>Pick a tool — upload happens inside it, results download instantly.</p>
+      </div>
+      <div class="cat-tabs" id="catTabs"></div>
+    </div>
+    <div class="tool-grid" id="toolGrid"></div>
+  </section>
+
+  <section class="wrap" id="howSection">
+    <div class="strip">
+      <div class="checker-bg"></div>
+      <div class="strip-inner">
+        <h2>Private by design — three simple steps</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="num">// 01</div>
+            <h4>Pick a tool & drop a file</h4>
+            <p>Choose any tool from the grid and add your image. It loads straight into your browser — no server, no queue.</p>
+          </div>
+          <div class="step">
+            <div class="num">// 02</div>
+            <h4>Adjust and process</h4>
+            <p>Tune the settings on the right. AI background removal runs a real model locally; everything else uses fast canvas processing.</p>
+          </div>
+          <div class="step">
+            <div class="num">// 03</div>
+            <h4>Download instantly</h4>
+            <p>Grab your finished image in one click. Nothing is stored — close the tab and it's gone.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site">
+    <div class="wrap foot">
+      <div>© <span id="yr"></span> SallusTech · sallustech.store — built for fast, private image editing.</div>
+      <div class="links">
+        <a id="footTools">Tools</a>
+        <a id="footHow">How it works</a>
+        <a href="#">Privacy</a>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<!-- ============ TOOL VIEW ============ -->
+<main id="viewTool" class="view">
+  <div class="wrap">
+    <div class="ws-top">
+      <button class="back-btn" id="wsBack">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 18-6-6 6-6"/></svg>
+        All tools
+      </button>
+      <div class="ws-title">
+        <div class="tool-ico" id="wsIco"></div>
+        <div>
+          <h2 id="wsName">Tool</h2>
+          <p id="wsTagline">tagline</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ws-body">
+      <div class="stage" id="wsStage">
+        <div class="stage-head" id="wsStageHead" style="display:none">
+          <span id="wsStageLabel">Preview</span>
+          <div class="seg" id="wsCompare" style="display:none">
+            <button data-c="before">Original</button>
+            <button data-c="after" class="on">Result</button>
+          </div>
+        </div>
+        <div id="wsStageContent" style="flex:1;display:flex;"></div>
+      </div>
+
+      <aside class="panel" id="wsPanel">
+        <div class="panel-head">
+          <h3 id="wsPanelTitle">Settings</h3>
+          <p id="wsPanelSub">Add an image to begin.</p>
+        </div>
+        <div class="panel-body" id="wsControls"></div>
+        <div class="panel-foot" id="wsFoot"></div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" accept="image/*" hidden />
+
+<script type="module">
+import { removeBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm';
+
+/* ============================================================
+   SallusTech Image Studio
+   Single-file, fully client-side image toolkit.
+   ============================================================ */
+
+const $  = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+const fmtBytes = b => b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(2)+' MB';
+
+/* ---------- ICONS (inline, consistent 2px stroke) ---------- */
+const I = {
+  removebg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3z"/><path d="M14 14h7v7h-7z" fill="currentColor" stroke="none"/><path d="M14 3h7v7h-7z" opacity=".4"/><path d="M3 14h7v7H3z" opacity=".4"/></svg>',
+  compress:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>',
+  resize:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 3H3v18h18z" opacity=".35"/><path d="M14 3h7v7M21 3l-8 8"/></svg>',
+  crop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>',
+  convert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7.5 7.5M3 21l7.5-7.5"/></svg>',
+  rotate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
+  upscale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 16V8a2 2 0 0 1 2-2h8"/><path d="m14 3 7 7-7 7"/><path d="M21 10H9"/></svg>',
+  watermark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" opacity=".35"/><path d="M7 15h10M7 11h6" stroke-width="2.2"/></svg>',
+  meme:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 16h6" stroke-width="2.2"/></svg>',
+  filters:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6" opacity=".6"/><circle cx="15" cy="15" r="6"/></svg>',
+  blur:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity=".5"/><circle cx="12" cy="12" r="10" opacity=".25"/></svg>',
+  grayscale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/></svg>'
+};
+
+/* ---------- TOOL REGISTRY ---------- */
+const TOOLS = [
+  { id:'removebg', name:'Remove background', tagline:'AI cut-out, transparent PNG', cat:'AI', accent:'var(--coral)', icon:I.removebg, badge:'AI', interactive:false, transparentOut:true },
+  { id:'compress', name:'Compress image', tagline:'Shrink file size, keep quality', cat:'Optimize', accent:'var(--teal)', icon:I.compress },
+  { id:'resize', name:'Resize image', tagline:'Set pixels or scale by percent', cat:'Optimize', accent:'var(--sky)', icon:I.resize },
+  { id:'convert', name:'Convert format', tagline:'JPG · PNG · WebP', cat:'Optimize', accent:'var(--violet)', icon:I.convert },
+  { id:'upscale', name:'Enlarge image', tagline:'Scale up 2× / 4× smoothly', cat:'Optimize', accent:'var(--amber)', icon:I.upscale },
+  { id:'crop', name:'Crop image', tagline:'Drag to keep what matters', cat:'Edit', accent:'var(--rose)', icon:I.crop, interactive:'crop' },
+  { id:'rotate', name:'Rotate & flip', tagline:'Turn or mirror your photo', cat:'Edit', accent:'var(--sky)', icon:I.rotate },
+  { id:'blur', name:'Blur an area', tagline:'Hide faces or details', cat:'Edit', accent:'var(--violet)', icon:I.blur, interactive:'blur' },
+  { id:'filters', name:'Photo filters', tagline:'Grayscale, sepia, vintage…', cat:'Edit', accent:'var(--teal)', icon:I.filters },
+  { id:'watermark', name:'Add watermark', tagline:'Stamp text across an image', cat:'Create', accent:'var(--rose)', icon:I.watermark },
+  { id:'meme', name:'Add text / meme', tagline:'Top & bottom captions', cat:'Create', accent:'var(--amber)', icon:I.meme },
+];
+const CATS = ['All','AI','Optimize','Edit','Create'];
+
+/* ---------- HOME RENDER ---------- */
+const grid = $('#toolGrid');
+function renderTools(cat='All'){
+  grid.innerHTML = '';
+  TOOLS.filter(t=>cat==='All'||t.cat===cat).forEach(t=>{
+    const c = document.createElement('button');
+    c.className='tool-card';
+    c.innerHTML = `
+      ${t.badge?`<span class="badge">${t.badge}</span>`:''}
+      <div class="tool-ico" style="background:${t.accent}">${t.icon}</div>
+      <div><h3>${t.name}</h3><p>${t.tagline}</p></div>
+      <span class="go">Open tool
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
+      </span>`;
+    c.addEventListener('click',()=>openTool(t.id));
+    grid.appendChild(c);
+  });
+}
+const catTabs = $('#catTabs');
+CATS.forEach((c,i)=>{
+  const b=document.createElement('button');
+  b.className='cat-tab'+(i===0?' active':'');
+  b.textContent=c;
+  b.addEventListener('click',()=>{ $$('.cat-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderTools(c); });
+  catTabs.appendChild(b);
+});
+renderTools();
+$('#statTools').textContent = TOOLS.length;
+$('#yr').textContent = new Date().getFullYear();
+
+/* ---------- NAV ---------- */
+const scrollTo = el => el?.scrollIntoView({behavior:'smooth',block:'start'});
+$('#brandHome').addEventListener('click',goHome);
+$('#brandHome').addEventListener('keydown',e=>{if(e.key==='Enter')goHome();});
+$('#navTools').addEventListener('click',()=>{goHome();setTimeout(()=>scrollTo($('#toolsSection')),60);});
+$('#footTools').addEventListener('click',()=>{goHome();setTimeout(()=>scrollTo($('#toolsSection')),60);});
+$('#navHow').addEventListener('click',()=>{goHome();setTimeout(()=>scrollTo($('#howSection')),60);});
+$('#footHow').addEventListener('click',()=>{goHome();setTimeout(()=>scrollTo($('#howSection')),60);});
+$('#navStart').addEventListener('click',()=>openTool('removebg'));
+
+/* ---------- TOAST ---------- */
+let toastT;
+function toast(msg,isErr){
+  const t=$('#toast'); t.textContent=msg; t.className='toast show'+(isErr?' err':'');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.className='toast',2800);
+}
+
+/* ---------- FILE HANDLING ---------- */
+const fileInput=$('#fileInput');
+let pendingTool=null;
+function pickFile(toolId){ pendingTool=toolId; fileInput.value=''; fileInput.click(); }
+fileInput.addEventListener('change',()=>{
+  const f=fileInput.files[0]; if(!f) return;
+  if(!f.type.startsWith('image/')){ toast('That file is not an image.',true); return; }
+  if(pendingTool && pendingTool!==state.toolId){ openTool(pendingTool,f); }
+  else { loadFileIntoStage(f); }
+});
+
+/* hero dropzone */
+const heroDz=$('#heroDz');
+$('#heroPick').addEventListener('click',()=>pickFile('removebg'));
+heroDz.addEventListener('click',e=>{ if(e.target.closest('button'))return; pickFile('removebg'); });
+;['dragover','dragenter'].forEach(ev=>heroDz.addEventListener(ev,e=>{e.preventDefault();heroDz.classList.add('drag');}));
+;['dragleave','drop'].forEach(ev=>heroDz.addEventListener(ev,e=>{e.preventDefault();heroDz.classList.remove('drag');}));
+heroDz.addEventListener('drop',e=>{
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/'))openTool('removebg',f);
+  else toast('Please drop an image file.',true);
+});
+
+/* ---------- VIEW SWITCH ---------- */
+function show(view){ $$('.view').forEach(v=>v.classList.remove('active')); view.classList.add('active'); window.scrollTo({top:0,behavior:'instant'}); }
+function goHome(){ show($('#viewHome')); state={}; }
+$('#wsBack').addEventListener('click',goHome);
+
+/* ============================================================
+   WORKSPACE
+   ============================================================ */
+let state = {}; // {toolId, tool, file, img, options, resultBlob, resultURL, selection}
+
+function openTool(toolId, file){
+  const tool = TOOLS.find(t=>t.id===toolId);
+  if(!tool) return;
+  state = { toolId, tool, options:{} };
+  show($('#viewTool'));
+  $('#wsIco').style.background = tool.accent;
+  $('#wsIco').innerHTML = tool.icon;
+  $('#wsName').textContent = tool.name;
+  $('#wsTagline').textContent = tool.tagline;
+  $('#wsPanelTitle').textContent = tool.name;
+  $('#wsPanelSub').textContent = 'Add an image to begin.';
+  $('#wsControls').innerHTML = '';
+  $('#wsFoot').innerHTML = '';
+  $('#wsStageHead').style.display='none';
+  $('#wsCompare').style.display='none';
+  renderEmptyStage();
+  if(file) loadFileIntoStage(file);
+}
+
+function renderEmptyStage(){
+  const sc=$('#wsStageContent');
+  sc.innerHTML = `
+    <div class="stage-dz" id="stageDz">
+      <div class="icon-cloud">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 13v8M8 17l4 4 4-4"/><path d="M20 16.6A5 5 0 0 0 18 7h-1.3A8 8 0 1 0 4 15"/></svg>
+      </div>
+      <div><h3 style="margin:0;font-family:'Space Grotesk';font-size:18px;">Drop your image here</h3>
+      <p style="margin:5px 0 0;color:var(--muted);font-size:13.5px;">or choose a file — it stays on your device</p></div>
+      <button class="btn-primary" id="stagePick">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        Select image
+      </button>
+    </div>`;
+  const dz=$('#stageDz');
+  $('#stagePick').addEventListener('click',()=>pickFile(state.toolId));
+  ;['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag');}));
+  ;['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag');}));
+  dz.addEventListener('drop',e=>{
+    const f=e.dataTransfer.files[0];
+    if(f&&f.type.startsWith('image/'))loadFileIntoStage(f);
+    else toast('Please drop an image file.',true);
+  });
+}
+
+function loadFileIntoStage(file){
+  state.file=file;
+  state.resultBlob=null;
+  if(state.resultURL){URL.revokeObjectURL(state.resultURL);state.resultURL=null;}
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    state.img=img;
+    state.imgURL=url;
+    buildToolUI();
+  };
+  img.onerror=()=>toast('Could not read that image.',true);
+  img.src=url;
+}
+
+/* ---------- build the tool's preview + controls ---------- */
+function buildToolUI(){
+  const t=state.tool;
+  $('#wsStageHead').style.display='flex';
+  $('#wsStageLabel').textContent = `${state.img.naturalWidth} × ${state.img.naturalHeight}px · ${fmtBytes(state.file.size)}`;
+  $('#wsPanelSub').textContent = 'Adjust settings, then run.';
+
+  if(t.interactive){ renderInteractiveStage(); }
+  else { renderPreview(state.imgURL, t.transparentOut); }
+
+  renderControls();
+  renderFoot();
+}
+
+function renderPreview(src, checker){
+  const sc=$('#wsStageContent');
+  sc.innerHTML = `<div class="stage-canvas ${checker?'show-checker':''}" id="stageCanvas"><img id="previewImg" src="${src}" alt="Working image"/></div>`;
+}
+
+/* ---------- CONTROLS per tool ---------- */
+function renderControls(){
+  const box=$('#wsControls'); box.innerHTML='';
+  const t=state.tool;
+  const o=state.options;
+
+  const add = html => { const d=document.createElement('div'); d.className='ctl'; d.innerHTML=html; box.appendChild(d); return d; };
+  const range = (key,label,min,max,val,step,unit='')=>{
+    o[key]=val;
+    const d=add(`<div class="range-row"><label>${label}</label><span class="val" id="v_${key}">${val}${unit}</span></div><input type="range" id="r_${key}" min="${min}" max="${max}" step="${step}" value="${val}">`);
+    $('#r_'+key,d).addEventListener('input',e=>{o[key]=parseFloat(e.target.value);$('#v_'+key,d).textContent=e.target.value+unit;});
+  };
+  const chips=(key,label,opts,val)=>{
+    o[key]=val;
+    const d=add(`<label>${label}</label><div class="seg-ctl" id="c_${key}"></div>`);
+    const wrap=$('#c_'+key,d);
+    opts.forEach(op=>{
+      const b=document.createElement('button');b.className='chip'+(op.v===val?' active':'');b.textContent=op.t;
+      b.addEventListener('click',()=>{o[key]=op.v;$$('.chip',wrap).forEach(x=>x.classList.remove('active'));b.classList.add('active');if(key==='_live')live();});
+      wrap.appendChild(b);
+    });
+    return wrap;
+  };
+
+  switch(state.toolId){
+    case 'removebg':
+      add(`<label>AI background removal</label><p class="hint" style="margin:0">First run downloads a one-time AI model (~40 MB) into your browser cache. After that it's instant and offline. The subject is detected automatically — no settings needed.</p>`);
+      o.format='image/png';
+      break;
+
+    case 'compress':
+      range('quality','Quality',10,100,80,1,'%');
+      chips('format','Output format',[{t:'JPG',v:'image/jpeg'},{t:'WebP',v:'image/webp'}],'image/jpeg');
+      add(`<p class="hint" style="margin:0">Lower quality = smaller file. WebP usually beats JPG at the same quality.</p>`);
+      break;
+
+    case 'resize':{
+      const w=state.img.naturalWidth, h=state.img.naturalHeight;
+      o.mode='px'; o.w=w; o.h=h; o.pct=100; o.lock=true;
+      add(`<label>Resize by</label><div class="seg-ctl" id="rmode">
+            <button class="chip active" data-m="px">Pixels</button>
+            <button class="chip" data-m="pct">Percentage</button></div>`);
+      const px=add(`<div id="pxFields"><label>Dimensions (px)</label>
+            <div class="field"><input type="number" id="rw" value="${w}" min="1"><span style="color:var(--muted)">×</span><input type="number" id="rh" value="${h}" min="1"></div>
+            <label class="toggle" style="margin-top:12px"><input type="checkbox" id="rlock" checked> Keep aspect ratio</label></div>`);
+      const pc=add(`<div id="pctFields" style="display:none"><div class="range-row"><label>Scale</label><span class="val" id="v_pct">100%</span></div><input type="range" id="rpct" min="5" max="400" value="100" step="5"></div>`);
+      const ratio=w/h;
+      $('#rw',px).addEventListener('input',e=>{o.w=+e.target.value||1;if(o.lock){o.h=Math.round(o.w/ratio);$('#rh',px).value=o.h;}});
+      $('#rh',px).addEventListener('input',e=>{o.h=+e.target.value||1;if(o.lock){o.w=Math.round(o.h*ratio);$('#rw',px).value=o.w;}});
+      $('#rlock',px).addEventListener('change',e=>o.lock=e.target.checked);
+      $('#rpct',pc).addEventListener('input',e=>{o.pct=+e.target.value;$('#v_pct',pc).textContent=e.target.value+'%';});
+      $$('#rmode .chip').forEach(b=>b.addEventListener('click',()=>{
+        $$('#rmode .chip').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+        o.mode=b.dataset.m;
+        $('#pxFields').style.display=o.mode==='px'?'block':'none';
+        $('#pctFields').style.display=o.mode==='pct'?'block':'none';
+      }));
+      break;}
+
+    case 'convert':
+      chips('format','Convert to',[{t:'PNG',v:'image/png'},{t:'JPG',v:'image/jpeg'},{t:'WebP',v:'image/webp'}],'image/png');
+      add(`<p class="hint" style="margin:0">PNG keeps transparency. JPG fills transparent areas white.</p>`);
+      break;
+
+    case 'upscale':
+      chips('scale','Enlarge by',[{t:'2×',v:2},{t:'3×',v:3},{t:'4×',v:4}],2);
+      chips('format','Output',[{t:'PNG',v:'image/png'},{t:'JPG',v:'image/jpeg'}],'image/png');
+      add(`<p class="hint" style="margin:0">Smooth high-quality interpolation. This enlarges pixels — it doesn't invent new detail like a paid AI super-resolution service.</p>`);
+      break;
+
+    case 'rotate':
+      o.angle=0; o.flipH=false; o.flipV=false;
+      add(`<label>Rotate</label><div class="seg-ctl" id="rotbtns">
+            <button class="chip" data-a="-90">↺ 90° left</button>
+            <button class="chip" data-a="90">↻ 90° right</button>
+            <button class="chip" data-a="180">180°</button></div>`);
+      add(`<label>Flip</label><div class="seg-ctl">
+            <label class="toggle"><input type="checkbox" id="fH"> Horizontal</label></div>
+            <div class="seg-ctl" style="margin-top:8px"><label class="toggle"><input type="checkbox" id="fV"> Vertical</label></div>`);
+      $$('#rotbtns .chip').forEach(b=>b.addEventListener('click',()=>{o.angle=(o.angle+ +b.dataset.a+360)%360;livePreviewRotate();}));
+      $('#fH').addEventListener('change',e=>{o.flipH=e.target.checked;livePreviewRotate();});
+      $('#fV').addEventListener('change',e=>{o.flipV=e.target.checked;livePreviewRotate();});
+      add(`<p class="hint" id="rotState" style="margin:0">Rotation: 0°</p>`);
+      break;
+
+    case 'filters':{
+      const fl=[
+        {t:'None',v:'none'},{t:'Grayscale',v:'grayscale(1)'},{t:'Sepia',v:'sepia(.8)'},
+        {t:'Vintage',v:'sepia(.4) contrast(1.1) saturate(1.3) brightness(1.05)'},
+        {t:'Cool',v:'saturate(1.2) hue-rotate(-12deg) brightness(1.03)'},
+        {t:'Warm',v:'saturate(1.25) hue-rotate(12deg) brightness(1.04)'},
+        {t:'High contrast',v:'contrast(1.45) saturate(1.1)'},{t:'Fade',v:'contrast(.85) brightness(1.1) saturate(.8)'},{t:'Invert',v:'invert(1)'}
+      ];
+      o.filter='none';o.bright=100;o.contrast=100;o.sat=100;
+      const d=add(`<label>Preset</label><div class="seg-ctl" id="filterChips"></div>`);
+      const w=$('#filterChips',d);
+      fl.forEach(f=>{const b=document.createElement('button');b.className='chip'+(f.v==='none'?' active':'');b.textContent=f.t;b.addEventListener('click',()=>{o.filter=f.v;$$('.chip',w).forEach(x=>x.classList.remove('active'));b.classList.add('active');liveFilter();});w.appendChild(b);});
+      range('bright','Brightness',50,150,100,1,'%');
+      range('contrast','Contrast',50,150,100,1,'%');
+      range('sat','Saturation',0,200,100,1,'%');
+      ['bright','contrast','sat'].forEach(k=>$('#r_'+k).addEventListener('input',liveFilter));
+      break;}
+
+    case 'watermark':
+      o.text='SallusTech'; o.size=6; o.opacity=35; o.color='#ffffff'; o.tile=false; o.pos='br';
+      add(`<label>Watermark text</label><input type="text" id="wmText" value="SallusTech" maxlength="40">`);
+      range('size','Text size',2,18,6,.5,'%');
+      range('opacity','Opacity',5,100,35,1,'%');
+      add(`<label>Colour</label><div class="field"><input type="color" id="wmColor" value="#ffffff" style="width:46px;height:40px;padding:3px;border-radius:9px;"><span class="hint" id="wmColorTxt">#ffffff</span></div>`);
+      chips('pos','Position',[{t:'⤡ Tiled',v:'tile'},{t:'Centre',v:'c'},{t:'Bottom-right',v:'br'},{t:'Bottom-left',v:'bl'},{t:'Top-right',v:'tr'}],'br');
+      $('#wmText').addEventListener('input',e=>{o.text=e.target.value;});
+      $('#wmColor').addEventListener('input',e=>{o.color=e.target.value;$('#wmColorTxt').textContent=e.target.value;});
+      ['size','opacity'].forEach(k=>{});
+      break;
+
+    case 'meme':
+      o.top='TOP TEXT'; o.bottom='BOTTOM TEXT'; o.size=9; o.color='#ffffff';
+      add(`<label>Top text</label><input type="text" id="memeTop" value="TOP TEXT" maxlength="60">`);
+      add(`<label>Bottom text</label><input type="text" id="memeBot" value="BOTTOM TEXT" maxlength="60">`);
+      range('size','Text size',5,16,9,.5,'%');
+      add(`<label>Colour</label><div class="field"><input type="color" id="memeColor" value="#ffffff" style="width:46px;height:40px;padding:3px;border-radius:9px;"><span class="hint">white with black outline</span></div>`);
+      $('#memeTop').addEventListener('input',e=>o.top=e.target.value);
+      $('#memeBot').addEventListener('input',e=>o.bottom=e.target.value);
+      $('#memeColor').addEventListener('input',e=>o.color=e.target.value);
+      break;
+
+    case 'crop':
+      add(`<label>Crop selection</label><p class="hint" style="margin:0 0 10px">Drag the box on the image to choose the area. Use a ratio for social formats.</p>`);
+      o.ratio='free';
+      chips('ratio','Aspect ratio',[{t:'Free',v:'free'},{t:'1:1',v:'1'},{t:'4:3',v:'1.3333'},{t:'16:9',v:'1.7778'},{t:'3:4',v:'0.75'}],'free');
+      // re-bind chips to update ratio + redraw
+      $$('#c_ratio .chip').forEach(b=>b.addEventListener('click',()=>{ applyRatio(o.ratio); }));
+      add(`<p class="hint" id="cropSize" style="margin:0">Selection: —</p>`);
+      break;
+
+    case 'blur':
+      add(`<label>Blur area</label><p class="hint" style="margin:0 0 10px">Drag the box over a face or detail you want to hide, then set how strong the blur is.</p>`);
+      range('strength','Blur strength',4,40,16,1,'px');
+      add(`<p class="hint" id="blurSize" style="margin:0">Selection: —</p>`);
+      break;
+  }
+}
+
+/* live preview hooks */
+function live(){}
+function liveFilter(){
+  const img=$('#previewImg'); if(!img)return; const o=state.options;
+  $('#v_bright')&&($('#v_bright').textContent=o.bright+'%');
+  img.style.filter=`${o.filter==='none'?'':o.filter} brightness(${o.bright}%) contrast(${o.contrast}%) saturate(${o.sat}%)`;
+}
+function livePreviewRotate(){
+  const img=$('#previewImg'); if(!img)return; const o=state.options;
+  $('#rotState')&&($('#rotState').textContent=`Rotation: ${o.angle}°  ${o.flipH?'· flip H':''} ${o.flipV?'· flip V':''}`);
+  img.style.transform=`rotate(${o.angle}deg) scale(${o.flipH?-1:1},${o.flipV?-1:1})`;
+}
+
+/* ---------- FOOTER buttons ---------- */
+function renderFoot(){
+  const foot=$('#wsFoot'); foot.innerHTML='';
+  const runLabels={removebg:'Remove background',compress:'Compress now',resize:'Resize image',convert:'Convert',upscale:'Enlarge',rotate:'Apply',filters:'Apply filter',watermark:'Add watermark',meme:'Generate',crop:'Crop image',blur:'Apply blur'};
+  const run=document.createElement('button');
+  run.className='btn-primary btn-block'; run.id='runBtn';
+  run.innerHTML=`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 3l14 9-14 9z"/></svg> ${runLabels[state.toolId]||'Process'}`;
+  run.addEventListener('click',runTool);
+  foot.appendChild(run);
+
+  const change=document.createElement('button');
+  change.className='btn-soft'; change.textContent='Choose a different image';
+  change.addEventListener('click',()=>pickFile(state.toolId));
+  foot.appendChild(change);
+}
+
+/* ---------- INTERACTIVE STAGE (crop / blur) ---------- */
+let selState=null;
+function renderInteractiveStage(){
+  const sc=$('#wsStageContent');
+  sc.innerHTML=`<div class="stage-canvas" id="stageCanvas"><div class="sel-wrap" id="selWrap"><img id="previewImg" src="${state.imgURL}" alt="Working image" draggable="false"></div></div>`;
+  const img=$('#previewImg');
+  img.onload=()=>initSelection();
+  if(img.complete) initSelection();
+}
+function initSelection(){
+  const wrap=$('#selWrap'), img=$('#previewImg');
+  const dw=img.clientWidth, dh=img.clientHeight;
+  // default selection = centered 60%
+  let box={x:dw*0.2,y:dh*0.2,w:dw*0.6,h:dh*0.6};
+  selState={wrap,img,box,dw,dh,scaleX:img.naturalWidth/dw,scaleY:img.naturalHeight/dh};
+  const sel=document.createElement('div'); sel.className='sel-box'; sel.id='selBox';
+  sel.innerHTML='<div class="handle h-nw"></div><div class="handle h-ne"></div><div class="handle h-sw"></div><div class="handle h-se"></div>';
+  wrap.appendChild(sel);
+  drawSel();
+  enableDrag(sel);
+  updateSelInfo();
+}
+function drawSel(){
+  const {box}=selState, sel=$('#selBox');
+  sel.style.left=box.x+'px';sel.style.top=box.y+'px';sel.style.width=box.w+'px';sel.style.height=box.h+'px';
+}
+function clampBox(){
+  const s=selState,b=s.box;
+  b.w=Math.max(20,Math.min(b.w,s.dw)); b.h=Math.max(20,Math.min(b.h,s.dh));
+  b.x=Math.max(0,Math.min(b.x,s.dw-b.w)); b.y=Math.max(0,Math.min(b.y,s.dh-b.h));
+}
+function applyRatio(r){
+  if(!selState)return; const s=selState,b=s.box;
+  if(r!=='free'){ const ratio=parseFloat(r); b.h=b.w/ratio; if(b.y+b.h>s.dh){b.h=s.dh-b.y;b.w=b.h*ratio;} }
+  clampBox();drawSel();updateSelInfo();
+}
+function updateSelInfo(){
+  if(!selState)return;const b=selState.box,s=selState;
+  const rw=Math.round(b.w*s.scaleX),rh=Math.round(b.h*s.scaleY);
+  const el=$('#cropSize')||$('#blurSize'); if(el)el.textContent=`Selection: ${rw} × ${rh}px`;
+}
+function enableDrag(sel){
+  let mode=null,sx,sy,start;
+  const onDown=e=>{
+    e.preventDefault();
+    const pt=e.touches?e.touches[0]:e;
+    sx=pt.clientX;sy=pt.clientY;start={...selState.box};
+    mode = e.target.classList.contains('handle') ? [...e.target.classList].find(c=>c.startsWith('h-')) : 'move';
+    document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+    document.addEventListener('touchmove',onMove,{passive:false});document.addEventListener('touchend',onUp);
+  };
+  const onMove=e=>{
+    e.preventDefault();const pt=e.touches?e.touches[0]:e;
+    const dx=pt.clientX-sx,dy=pt.clientY-sy,b=selState.box;
+    if(mode==='move'){b.x=start.x+dx;b.y=start.y+dy;}
+    else{
+      if(mode.includes('e'))b.w=start.w+dx;
+      if(mode.includes('s'))b.h=start.h+dy;
+      if(mode.includes('w')){b.w=start.w-dx;b.x=start.x+dx;}
+      if(mode.includes('n')){b.h=start.h-dy;b.y=start.y+dy;}
+    }
+    clampBox();drawSel();updateSelInfo();
+  };
+  const onUp=()=>{mode=null;document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);document.removeEventListener('touchmove',onMove);document.removeEventListener('touchend',onUp);};
+  sel.addEventListener('mousedown',onDown);sel.addEventListener('touchstart',onDown,{passive:false});
+}
+
+/* ============================================================
+   PROCESSING
+   ============================================================ */
+function showProc(msg,sub,withBar){
+  const sc=$('#wsStageContent');
+  const ov=document.createElement('div');ov.className='proc';ov.id='procOv';
+  ov.innerHTML=`<div class="spinner"></div><div class="pmsg" id="pmsg">${msg}</div><div class="psub" id="psub">${sub||''}</div>${withBar?'<div class="pbar"><i id="pbar"></i></div>':''}`;
+  sc.appendChild(ov);
+}
+function setProc(msg,sub,pct){ const m=$('#pmsg'),s=$('#psub'),b=$('#pbar'); if(m&&msg)m.textContent=msg; if(s&&sub!=null)s.textContent=sub; if(b&&pct!=null)b.style.width=pct+'%'; }
+function hideProc(){ $('#procOv')?.remove(); }
+
+function srcCanvas(){ const c=document.createElement('canvas');c.width=state.img.naturalWidth;c.height=state.img.naturalHeight;c.getContext('2d').drawImage(state.img,0,0);return c; }
+const blobOf=(canvas,type,q)=>new Promise(res=>canvas.toBlob(res,type,q));
+
+async function runTool(){
+  if(!state.img){toast('Add an image first.',true);return;}
+  const run=$('#runBtn'); run.disabled=true;
+  try{
+    let blob, type='image/png';
+    switch(state.toolId){
+      case 'removebg': blob=await doRemoveBg(); type='image/png'; break;
+      case 'compress': ({blob,type}=await doCanvas((c,ctx)=>{},state.options.format,state.options.quality/100)); break;
+      case 'resize': ({blob,type}=await doResize()); break;
+      case 'convert': ({blob,type}=await doConvert()); break;
+      case 'upscale': ({blob,type}=await doUpscale()); break;
+      case 'rotate': ({blob,type}=await doRotate()); break;
+      case 'filters': ({blob,type}=await doFilters()); break;
+      case 'watermark': ({blob,type}=await doWatermark()); break;
+      case 'meme': ({blob,type}=await doMeme()); break;
+      case 'crop': ({blob,type}=await doCrop()); break;
+      case 'blur': ({blob,type}=await doBlur()); break;
+    }
+    if(blob) finishResult(blob,type);
+  }catch(err){
+    console.error(err);
+    hideProc();
+    toast(state.toolId==='removebg' ? 'Background removal failed — check your connection and retry.' : 'Something went wrong processing that image.', true);
+  }finally{ run.disabled=false; }
+}
+
+/* -- remove background (AI) -- */
+async function doRemoveBg(){
+  showProc('Preparing AI model…','This is a one-time download',true);
+  const blob = await removeBackground(state.file,{
+    publicPath:'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/dist/',
+    output:{format:'image/png'},
+    progress:(key,cur,total)=>{
+      const pct = total? Math.round(cur/total*100) : 0;
+      if(key.startsWith('fetch')) setProc('Downloading AI model…',`${pct}% · cached after first use`,pct);
+      else if(key.startsWith('compute')||key.startsWith('inference')) setProc('Removing background…','Running locally on your device',pct);
+      else setProc('Working…',null,pct);
+    }
+  });
+  hideProc();
+  return blob;
+}
+
+/* -- generic canvas re-encode (compress) -- */
+async function doCanvas(draw,type,q){
+  const c=srcCanvas();draw&&draw(c,c.getContext('2d'));
+  const blob=await blobOf(c,type,q); return {blob,type};
+}
+
+async function doResize(){
+  const o=state.options;
+  let tw,th;
+  if(o.mode==='pct'){ tw=Math.max(1,Math.round(state.img.naturalWidth*o.pct/100)); th=Math.max(1,Math.round(state.img.naturalHeight*o.pct/100)); }
+  else { tw=Math.max(1,o.w); th=Math.max(1,o.h); }
+  const c=document.createElement('canvas');c.width=tw;c.height=th;
+  const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(state.img,0,0,tw,th);
+  const type=state.file.type==='image/png'?'image/png':'image/jpeg';
+  const blob=await blobOf(c,type,.92); return {blob,type};
+}
+
+async function doConvert(){
+  const o=state.options;const c=srcCanvas();
+  if(o.format==='image/jpeg'){ const ctx=c.getContext('2d');ctx.globalCompositeOperation='destination-over';ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height); }
+  const blob=await blobOf(c,o.format,.92); return {blob,type:o.format};
+}
+
+async function doUpscale(){
+  const o=state.options;const s=o.scale;
+  const tw=state.img.naturalWidth*s,th=state.img.naturalHeight*s;
+  const c=document.createElement('canvas');c.width=tw;c.height=th;
+  const ctx=c.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(state.img,0,0,tw,th);
+  if(o.format==='image/jpeg'){ctx.globalCompositeOperation='destination-over';ctx.fillStyle='#fff';ctx.fillRect(0,0,tw,th);}
+  const blob=await blobOf(c,o.format,.92); return {blob,type:o.format};
+}
+
+async function doRotate(){
+  const o=state.options;const a=o.angle*Math.PI/180;
+  const w=state.img.naturalWidth,h=state.img.naturalHeight;
+  const swap=o.angle===90||o.angle===270;
+  const c=document.createElement('canvas');c.width=swap?h:w;c.height=swap?w:h;
+  const ctx=c.getContext('2d');
+  ctx.translate(c.width/2,c.height/2);ctx.rotate(a);ctx.scale(o.flipH?-1:1,o.flipV?-1:1);
+  ctx.drawImage(state.img,-w/2,-h/2);
+  const type=state.file.type==='image/png'?'image/png':'image/jpeg';
+  const blob=await blobOf(c,type,.92);return {blob,type};
+}
+
+async function doFilters(){
+  const o=state.options;const c=srcCanvas();const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.filter=`${o.filter==='none'?'':o.filter} brightness(${o.bright}%) contrast(${o.contrast}%) saturate(${o.sat}%)`;
+  ctx.drawImage(state.img,0,0);
+  const type=state.file.type==='image/png'?'image/png':'image/jpeg';
+  const blob=await blobOf(c,type,.92);return {blob,type};
+}
+
+async function doWatermark(){
+  const o=state.options;const c=srcCanvas();const ctx=c.getContext('2d');
+  const fs=Math.round(c.width*o.size/100);
+  ctx.font=`700 ${fs}px "Space Grotesk", sans-serif`;
+  ctx.fillStyle=o.color;ctx.globalAlpha=o.opacity/100;
+  ctx.textBaseline='middle';
+  const txt=o.text||' ';const m=ctx.measureText(txt);const pad=fs*0.6;
+  if(o.pos==='tile'){
+    ctx.save();ctx.translate(c.width/2,c.height/2);ctx.rotate(-Math.PI/6);ctx.textAlign='center';
+    const stepX=m.width+fs*2,stepY=fs*2.6;
+    for(let y=-c.height;y<c.height;y+=stepY)for(let x=-c.width;x<c.width;x+=stepX)ctx.fillText(txt,x,y);
+    ctx.restore();
+  }else{
+    ctx.textAlign='left';let x,y;
+    if(o.pos==='c'){ctx.textAlign='center';x=c.width/2;y=c.height/2;}
+    else if(o.pos==='br'){x=c.width-m.width-pad;y=c.height-fs;}
+    else if(o.pos==='bl'){x=pad;y=c.height-fs;}
+    else if(o.pos==='tr'){x=c.width-m.width-pad;y=fs;}
+    ctx.fillText(txt,x,y);
+  }
+  ctx.globalAlpha=1;
+  const type=state.file.type==='image/png'?'image/png':'image/jpeg';
+  const blob=await blobOf(c,type,.92);return {blob,type};
+}
+
+async function doMeme(){
+  const o=state.options;const c=srcCanvas();const ctx=c.getContext('2d');
+  const fs=Math.round(c.width*o.size/100);
+  ctx.font=`800 ${fs}px Impact, "Arial Black", sans-serif`;
+  ctx.textAlign='center';ctx.fillStyle=o.color;ctx.strokeStyle='#000';ctx.lineWidth=Math.max(2,fs/12);ctx.lineJoin='round';
+  const draw=(txt,y)=>{if(!txt)return;txt=txt.toUpperCase();ctx.strokeText(txt,c.width/2,y);ctx.fillText(txt,c.width/2,y);};
+  ctx.textBaseline='top';draw(o.top,fs*0.4);
+  ctx.textBaseline='bottom';draw(o.bottom,c.height-fs*0.4);
+  const type=state.file.type==='image/png'?'image/png':'image/jpeg';
+  const blob=await blobOf(c,type,.92);return {blob,type};
+}
+
+async function doCrop(){
+  const s=selState;if(!s){toast('Draw a crop box first.',true);return {};}
+  const b=s.box;const sx=b.x*s.scaleX,sy=b.y*s.scaleY,sw=b.w*s.scaleX,sh=b.h*s.scaleY;
+  const c=document.createElement('canvas');c.width=Math.round(sw);c.height=Math.round(sh);
+  c.getContext('2d').drawImage(state.img,sx,sy,sw,sh,0,0,c.width,c.height);
+  const type=state.file.type==='image/png'?'image/png':'image/jpeg';
+  const blob=await blobOf(c,type,.92);return {blob,type};
+}
+
+async function doBlur(){
+  const s=selState;if(!s){toast('Draw a box over the area first.',true);return {};}
+  const b=s.box;const sx=b.x*s.scaleX,sy=b.y*s.scaleY,sw=b.w*s.scaleX,sh=b.h*s.scaleY;
+  const c=srcCanvas();const ctx=c.getContext('2d');
+  ctx.save();
+  ctx.beginPath();ctx.rect(sx,sy,sw,sh);ctx.clip();
+  ctx.filter=`blur(${state.options.strength}px)`;
+  // draw enlarged region to cover edges
+  ctx.drawImage(state.img,0,0);
+  ctx.restore();
+  const type=state.file.type==='image/png'?'image/png':'image/jpeg';
+  const blob=await blobOf(c,type,.92);return {blob,type};
+}
+
+/* ---------- RESULT ---------- */
+function finishResult(blob,type){
+  if(state.resultURL)URL.revokeObjectURL(state.resultURL);
+  state.resultBlob=blob;state.resultURL=URL.createObjectURL(blob);state.resultType=type;
+  const sc=$('#wsStageContent');
+  const checker = state.tool.transparentOut || type==='image/png';
+  sc.innerHTML=`<div class="stage-canvas ${checker?'show-checker':''}" id="stageCanvas"><img id="resultImg" src="${state.resultURL}" alt="Result"></div>`;
+
+  // before/after compare
+  const head=$('#wsStageHead');head.style.display='flex';
+  const cmp=$('#wsCompare');cmp.style.display='flex';
+  $$('#wsCompare button').forEach(btn=>{
+    btn.onclick=()=>{
+      $$('#wsCompare button').forEach(x=>x.classList.remove('on'));btn.classList.add('on');
+      const r=$('#resultImg');
+      if(btn.dataset.c==='before'){r.src=state.imgURL;$('#stageCanvas').classList.remove('show-checker');}
+      else{r.src=state.resultURL;if(checker)$('#stageCanvas').classList.add('show-checker');}
+    };
+  });
+  $$('#wsCompare button').forEach(x=>x.classList.remove('on'));$('#wsCompare [data-c="after"]').classList.add('on');
+
+  // size delta
+  getDims(state.resultURL).then(d=>{
+    $('#wsStageLabel').textContent=`${d.w} × ${d.h}px · ${fmtBytes(blob.size)}`;
+  });
+
+  // panel → result summary + download
+  $('#wsPanelTitle').textContent='Your image is ready';
+  $('#wsPanelSub').textContent='Download it or run another tool.';
+  const ctl=$('#wsControls');
+  const before=state.file.size, after=blob.size;
+  const diff=before-after, pct=Math.round(diff/before*100);
+  ctl.innerHTML=`<div class="meta-list">
+      <div class="row"><span>Original size</span><b>${fmtBytes(before)}</b></div>
+      <div class="row"><span>New size</span><b>${fmtBytes(after)}</b></div>
+      ${diff>0?`<div class="row"><span>Saved</span><b class="delta-good">${fmtBytes(diff)} · ${pct}%</b></div>`:''}
+      <div class="row"><span>Format</span><b>${(type.split('/')[1]||'').toUpperCase()}</b></div>
+    </div>`;
+
+  const foot=$('#wsFoot');foot.innerHTML='';
+  const dl=document.createElement('button');dl.className='btn-primary btn-block';
+  dl.innerHTML=`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Download image`;
+  dl.addEventListener('click',downloadResult);
+  foot.appendChild(dl);
+
+  const again=document.createElement('button');again.className='btn-soft';again.textContent='Edit another image';
+  again.addEventListener('click',()=>openTool(state.toolId));
+  foot.appendChild(again);
+
+  const moreTools=document.createElement('button');moreTools.className='btn-soft';moreTools.textContent='Back to all tools';
+  moreTools.addEventListener('click',goHome);
+  foot.appendChild(moreTools);
+
+  toast('Done! Your image is ready to download.');
+}
+
+function getDims(url){return new Promise(r=>{const i=new Image();i.onload=()=>r({w:i.naturalWidth,h:i.naturalHeight});i.src=url;});}
+
+function downloadResult(){
+  if(!state.resultBlob)return;
+  const ext=(state.resultType.split('/')[1]||'png').replace('jpeg','jpg');
+  const base=(state.file.name||'image').replace(/\.[^.]+$/,'');
+  const a=document.createElement('a');a.href=state.resultURL;a.download=`${base}-sallustech.${ext}`;
+  document.body.appendChild(a);a.click();a.remove();
+}
+
+/* keyboard: Esc returns to tools */
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && $('#viewTool').classList.contains('active')) goHome(); });
+</script>
+</body>
+</html>
