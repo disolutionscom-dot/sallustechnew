@@ -1,0 +1,12 @@
+# --- clasp ---
+# Local credentials created by `clasp login` (NEVER commit this)
+.clasprc.json
+# Your private deployment link / notes
+deployment-url.txt
+
+# --- OS / editor noise ---
+.DS_Store
+Thumbs.db
+*.log
+node_modules/
+.vscode/
