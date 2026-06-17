@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sallu Tech File Share - Secure File Transfer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --paper:#F1EEE4; --paper-2:#FBFAF4; --ink:#172139; --ink-soft:#4a5470;
+    --air-red:#C0392B; --air-blue:#2C5AA0; --muted:#8e8975; --line:#e2ddcd;
+    --line-2:#d3ccb8; --ok:#2c7a59; --shadow:0 24px 60px -28px rgba(23,33,57,.45); --r:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:"Hanken Grotesk",system-ui,sans-serif;color:var(--ink);
+    background:radial-gradient(1200px 600px at 50% -10%, #fffdf6 0%, transparent 60%),var(--paper);
+    min-height:100dvh;display:flex;align-items:flex-start;justify-content:center;
+    padding:26px 16px 56px;-webkit-font-smoothing:antialiased}
+  .wrap{width:100%;max-width:520px}
+  header{text-align:center;margin-bottom:16px}
+  .eyebrow{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.34em;
+    text-transform:uppercase;color:var(--air-red);font-weight:700;margin:0 0 6px}
+  h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(36px,11vw,54px);
+    line-height:.94;margin:0;letter-spacing:-.02em}
+  .tag{margin:9px 0 0;color:var(--ink-soft);font-size:14px}
+  .envelope{position:relative;padding:9px;border-radius:calc(var(--r) + 7px);
+    background:repeating-linear-gradient(-45deg,var(--air-red) 0 13px,#fff 13px 21px,var(--air-blue) 21px 34px,#fff 34px 42px);
+    box-shadow:var(--shadow)}
+  .card{position:relative;background:var(--paper-2);border-radius:var(--r);padding:24px 22px 22px;overflow:hidden}
+  .postmark{position:absolute;top:14px;right:14px;width:92px;height:92px;border-radius:50%;
+    border:2px solid var(--air-blue);color:var(--air-blue);display:none;align-items:center;
+    justify-content:center;text-align:center;transform:rotate(-9deg);opacity:.92;pointer-events:none;
+    box-shadow:inset 0 0 0 4px var(--paper-2),inset 0 0 0 6px var(--air-blue)}
+  .postmark.show{display:flex;animation:stamp .42s cubic-bezier(.2,1.3,.5,1) both}
+  .pm-in{font-family:"Space Mono",monospace;line-height:1.25}
+  .pm-t{font-size:8.5px;letter-spacing:.16em;font-weight:700}
+  .pm-c{font-size:14px;font-weight:700;letter-spacing:.05em;margin:1px 0}
+  .pm-d{font-size:8px;letter-spacing:.1em}
+  @keyframes stamp{0%{opacity:0;transform:rotate(-9deg) scale(1.7)}60%{opacity:.92}100%{opacity:.92;transform:rotate(-9deg) scale(1)}}
+  @media (prefers-reduced-motion:reduce){.postmark.show{animation:none}}
+  .status{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);
+    font-family:"Space Mono",monospace;letter-spacing:.02em;margin-bottom:18px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none;position:relative}
+  .dot.live{background:var(--ok)} .dot.warn{background:var(--air-red)} .dot.busy{background:var(--air-blue)}
+  .dot.busy::after,.dot.live::after{content:"";position:absolute;inset:-4px;border-radius:50%;
+    border:1px solid currentColor;color:inherit;opacity:.5;animation:pulse 1.8s ease-out infinite}
+  @keyframes pulse{0%{transform:scale(.6);opacity:.6}100%{transform:scale(1.8);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.dot::after{animation:none;opacity:.4}}
+  .panel{display:none} .panel.active{display:block}
+  .dropzone{border:2px dashed var(--line-2);border-radius:12px;background:#fff;padding:30px 18px;
+    text-align:center;transition:border-color .15s,background .15s;cursor:pointer}
+  .dropzone:hover{border-color:var(--air-blue);background:#fbfcff}
+  .dropzone.over{border-color:var(--air-blue);background:#f1f6ff;border-style:solid}
+  .dz-ico{width:40px;height:40px;margin:0 auto 10px;color:var(--air-blue)}
+  .dz-title{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:18px;margin:0}
+  .dz-sub{margin:5px 0 0;font-size:13px;color:var(--muted)}
+  .divider{display:flex;align-items:center;gap:12px;margin:20px 0 16px;color:var(--muted);
+    font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.2em}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+  .join{display:flex;gap:9px}
+  input[type=text]{flex:1;font-family:"Space Mono",monospace;font-size:18px;letter-spacing:.14em;
+    padding:12px 14px;border:1.5px solid var(--line-2);border-radius:9px;background:#fff;color:var(--ink);
+    text-transform:lowercase;min-width:0}
+  input[type=text]:focus{outline:none;border-color:var(--air-blue);box-shadow:0 0 0 3px rgba(44,90,160,.12)}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;border-radius:9px;
+    font-size:14px;font-weight:600;background:var(--ink);color:#fff;transition:transform .08s,background .15s;letter-spacing:.01em}
+  .btn:hover{background:#0f1830} .btn:active{transform:translateY(1px)} .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line-2)}
+  .btn.ghost:hover{background:#fff}
+  .btn.full{width:100%} .btn svg{width:16px;height:16px}
+  .join .btn{flex:none;padding:12px 20px}
+  .btn-home{background:var(--air-blue);color:#fff;margin-top:12px}
+  .btn-home:hover{background:#1e4675}
+  .codebox{text-align:center;margin:2px 0 16px}
+  .code-label{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .code{font-family:"Space Mono",monospace;font-weight:700;font-size:clamp(34px,9vw,46px);letter-spacing:.18em;
+    color:var(--ink);cursor:pointer;user-select:all;display:inline-block;padding:2px 6px;border-radius:6px}
+  .code:hover{background:#fff}
+  .qr-wrap{display:flex;justify-content:center;margin:6px 0 16px}
+  .qr{padding:12px;background:#fff;border:1px solid var(--line);border-radius:8px;line-height:0}
+  .qr img,.qr canvas{display:block;border-radius:2px}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+  .btn-row .btn{flex:1;min-width:130px}
+  .note{margin-top:16px;font-size:12px;color:var(--muted);line-height:1.55;text-align:center}
+  .note b{color:var(--ink-soft);font-weight:600}
+  .xfers{margin-top:18px;display:flex;flex-direction:column;gap:10px}
+  .xfer{border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:#fff}
+  .xfer-top{display:flex;align-items:center;gap:10px}
+  .xfer-dir{width:26px;height:26px;border-radius:7px;flex:none;display:grid;place-items:center;color:#fff}
+  .xfer-dir.up{background:var(--air-blue)} .xfer-dir.down{background:var(--ok)}
+  .xfer-dir svg{width:14px;height:14px}
+  .xfer-meta{flex:1;min-width:0}
+  .xfer-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .xfer-info{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:1px;letter-spacing:.02em}
+  .xfer-act{font-size:12px;font-weight:600;color:#fff;background:var(--air-blue);white-space:nowrap;
+    padding:7px 13px;border-radius:7px;text-decoration:none}
+  .xfer-act:hover{background:#234c87}
+  .xfer-act.ghost{background:transparent;color:var(--air-blue);border:1.5px solid var(--line-2)}
+  .bar{height:5px;border-radius:99px;background:var(--line);margin-top:10px;overflow:hidden}
+  .bar span{display:block;height:100%;width:0;background:var(--air-blue);border-radius:99px;transition:width .12s linear}
+  .xfer.done .bar span{background:var(--ok)}
+  .err-title{font-family:"Bricolage Grotesque",sans-serif;font-size:20px;font-weight:600;margin:0 0 7px}
+  .err-body{font-size:14px;color:var(--ink-soft);line-height:1.55;margin:0 0 18px}
+  footer{text-align:center;margin-top:18px;font-size:11.5px;color:var(--muted);
+    font-family:"Space Mono",monospace;letter-spacing:.04em;line-height:1.7}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);
+    color:#fff;padding:11px 18px;border-radius:99px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;
+    transition:opacity .2s,transform .2s;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow">Sallu Tech · File Share</p>
+      <h1>Dispatch</h1>
+      <p class="tag">Share files directly using QR code or 6-character code. No storage, no tracking, completely private.</p>
+    </header>
+
+    <div class="envelope">
+      <div class="card">
+        <div class="postmark" id="postmark">
+          <div class="pm-in"><div class="pm-t">SHARED</div><div class="pm-c" id="pmCode">······</div><div class="pm-d" id="pmDate">— · —</div></div>
+        </div>
+
+        <div class="status"><span class="dot" id="dot"></span><span id="statusText">Getting ready…</span></div>
+
+        <!-- HOME -->
+        <section class="panel active" id="panelHome">
+          <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose files to send">
+            <svg class="dz-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+            <p class="dz-title">Drop files to share</p>
+            <p class="dz-sub">or tap to choose — you'll get a code to share</p>
+            <input type="file" id="fileInput" multiple hidden>
+          </div>
+          <div class="divider">OR RECEIVE A FILE</div>
+          <div class="join">
+            <input type="text" id="joinInput" inputmode="latin" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="abc123" maxlength="6">
+            <button class="btn" id="joinBtn">Receive</button>
+          </div>
+          <button class="btn btn-home btn-full" onclick="goHome()">← Return to Home</button>
+        </section>
+
+        <!-- SHARE (after sending) -->
+        <section class="panel" id="panelShare">
+          <div class="codebox">
+            <div class="code-label">Share Code</div>
+            <span class="code" id="codeText" title="Tap to copy">······</span>
+          </div>
+          <div class="qr-wrap" id="qrWrap"><div class="qr" id="qr"></div></div>
+          <div class="btn-row">
+            <button class="btn" id="copyLink">Copy link</button>
+            <button class="btn ghost" id="copyCode">Copy code</button>
+          </div>
+          <div class="xfers" id="xfersSend"></div>
+          <p class="note" id="shareNote">On the other device, open this tool and enter this code (or scan the QR). Files stay available for <b id="ttlTxt">24</b> hours.</p>
+          <div class="btn-row"><button class="btn ghost full" id="newBtn">Share more files</button></div>
+          <button class="btn btn-home btn-full" onclick="goHome()">← Return to Home</button>
+        </section>
+
+        <!-- RECEIVE -->
+        <section class="panel" id="panelReceive">
+          <div class="codebox"><div class="code-label">Receiving from</div><span class="code" id="recvCode">······</span></div>
+          <div class="xfers" id="xfersRecv"></div>
+          <div class="btn-row">
+            <button class="btn ghost" id="refreshBtn">Refresh</button>
+            <button class="btn ghost" id="backBtn">Back</button>
+          </div>
+          <p class="note" id="recvNote">Tap Save on each file. If something's missing, the sender may still be uploading — hit Refresh.</p>
+          <button class="btn btn-home btn-full" onclick="goHome()">← Return to Home</button>
+        </section>
+
+        <!-- ERROR -->
+        <section class="panel" id="panelError">
+          <p class="err-title" id="errTitle">Something went sideways</p>
+          <p class="err-body" id="errBody"></p>
+          <div class="btn-row"><button class="btn" id="retryBtn">Start over</button></div>
+          <button class="btn btn-home btn-full" onclick="goHome()">← Return to Home</button>
+        </section>
+      </div>
+    </div>
+
+    <footer>Files relay privately and auto-delete after <span id="ttlFoot">24</span>h<br>nothing is shared publicly or stored</footer>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var CHUNK = 1.5 * 1024 * 1024; // bytes per upload/download round-trip
+  var POLL_MS = 5000;
+
+  var cfg = { url:"", ttlHours:24 };
+  var sessionCode = "", pollTimer = null;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var dot = $("dot"), statusText = $("statusText");
+  var panels = { home:$("panelHome"), share:$("panelShare"), receive:$("panelReceive"), error:$("panelError") };
+
+  function show(name){ for (var k in panels) panels[k].classList.toggle("active", k===name); }
+  function setStatus(state, text){ dot.className = "dot" + (state?(" "+state):""); statusText.textContent = text; }
+  function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove("show"); },1700); }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function fmtBytes(n){ if(n<1024)return n+" B"; var u=["KB","MB","GB"],i=-1;
+    do{n/=1024;i++;}while(n>=1024&&i<u.length-1); return n.toFixed(n<10?1:0)+" "+u[i]; }
+
+  // ---- google.script.run as promises ----
+  function gs(fn){
+    var args = Array.prototype.slice.call(arguments,1);
+    return new Promise(function(res,rej){
+      google.script.run.withSuccessHandler(res).withFailureHandler(function(e){ rej(e); })[fn].apply(google.script.run, args);
+    });
+  }
+  function blobToB64(blob){
+    return new Promise(function(res,rej){
+      if(blob.size===0) return res("");
+      var r=new FileReader(); r.onload=function(){ res(r.result.split(",")[1]||""); }; r.onerror=rej; r.readAsDataURL(blob);
+    });
+  }
+  function b64ToBytes(b64){
+    if(!b64) return new Uint8Array(0);
+    var bin=atob(b64), n=bin.length, out=new Uint8Array(n);
+    for(var i=0;i<n;i++) out[i]=bin.charCodeAt(i);
+    return out;
+  }
+
+  // ---- transfer rows ----
+  var UP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg>';
+  var DN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></svg>';
+  function addRow(box, dir, name, size){
+    var el=document.createElement("div"); el.className="xfer";
+    el.innerHTML='<div class="xfer-top"><div class="xfer-dir '+dir+'">'+(dir==="up"?UP:DN)+
+      '</div><div class="xfer-meta"><div class="xfer-name"></div><div class="xfer-info">'+fmtBytes(size)+
+      '</div></div><span class="xfer-act" style="display:none"></span></div><div class="bar"><span></span></div>';
+    el.querySelector(".xfer-name").textContent=name; box.appendChild(el); return el;
+  }
+  function setBar(el,frac,info){ if(!el)return; el.querySelector(".bar span").style.width=Math.min(100,frac*100).toFixed(1)+"%";
+    if(info) el.querySelector(".xfer-info").textContent=info; }
+  function rowDone(el,label){ if(!el)return; el.classList.add("done"); el.querySelector(".bar span").style.width="100%";
+    el.querySelector(".xfer-info").textContent=label; }
+
+  // ---- SEND ----
+  function pickFiles(files){
+    if(!files||!files.length) return;
+    show("share"); setStatus("busy","Uploading…");
+    $("xfersSend").innerHTML="";
+    var arr=Array.prototype.slice.call(files);
+    var p = sessionCode ? Promise.resolve(sessionCode) : gs("createSession");
+    p.then(function(code){
+      sessionCode=code; renderShare(code);
+      return arr.reduce(function(chain,file){ return chain.then(function(){ return sendOne(code,file); }); }, Promise.resolve());
+    }).then(function(){
+      setStatus("live","Ready to receive"); stampPostmark();
+    }).catch(function(e){ showError("Upload couldn't finish", friendly(e)); });
+  }
+  function sendOne(code,file){
+    var key=uid(), total=Math.max(1,Math.ceil(file.size/CHUNK));
+    var row=addRow($("xfersSend"),"up",file.name,file.size), start=Date.now(), done=0;
+    var seq=Promise.resolve();
+    for(var i=0;i<total;i++){ (function(idx){
+      seq=seq.then(function(){
+        var slice=file.slice(idx*CHUNK,(idx+1)*CHUNK);
+        return blobToB64(slice).then(function(b64){
+          return gs("uploadChunk",code,key,file.type||"",idx,b64);
+        }).then(function(){
+          done++; var secs=(Date.now()-start)/1000;
+          setBar(row,done/total, fmtBytes(Math.min(file.size,done*CHUNK))+" / "+fmtBytes(file.size)+(secs>0?" · "+fmtBytes(done*CHUNK/secs)+"/s":""));
+        });
+      });
+    })(i); }
+    return seq.then(function(){
+      return gs("finalizeFile",code,key,file.name,file.type||"",total,file.size);
+    }).then(function(){ rowDone(row,"uploaded ✓"); });
+  }
+
+  // ---- RECEIVE ----
+  function startReceive(code){
+    code=String(code||"").trim().toLowerCase(); if(!code) return;
+    sessionCode=code; stopPoll();
+    show("receive"); $("recvCode").textContent=code; $("xfersRecv").innerHTML="";
+    setStatus("busy","Looking up that code…");
+    refreshReceive(true);
+    pollTimer=setInterval(function(){ refreshReceive(false); }, POLL_MS);
+  }
+  var recvRows={};
+  function refreshReceive(first){
+    gs("listSession",sessionCode).then(function(m){
+      setStatus("live","Connected");
+      var files=(m.files||[]);
+      if(!files.length && first){ /* nothing yet */ }
+      files.forEach(function(f){
+        if(recvRows[f.key]) return;
+        var row=addRow($("xfersRecv"),"down",f.name,f.size);
+        var btn=row.querySelector(".xfer-act"); btn.textContent="Save"; btn.style.display="";
+        btn.addEventListener("click",function(){ pullFile(f,row,btn); });
+        recvRows[f.key]=row;
+      });
+    }).catch(function(e){ stopPoll(); showError("Couldn't open that transfer", friendly(e)); });
+  }
+  function pullFile(f,row,btn){
+    btn.style.display="none";
+    var parts=[], start=Date.now(), got=0;
+    var seq=Promise.resolve();
+    for(var i=0;i<f.parts;i++){ (function(idx){
+      seq=seq.then(function(){
+        return gs("downloadChunk",sessionCode,f.key,idx).then(function(b64){
+          parts.push(b64ToBytes(b64)); got++;
+          var secs=(Date.now()-start)/1000;
+          setBar(row,got/(f.parts||1), fmtBytes(Math.min(f.size,got*CHUNK))+" / "+fmtBytes(f.size)+(secs>0?" · "+fmtBytes(got*CHUNK/secs)+"/s":""));
+        });
+      });
+    })(i); }
+    seq.then(function(){
+      var blob=new Blob(parts,{type:f.mime||"application/octet-stream"});
+      var url=URL.createObjectURL(blob);
+      try{ var a=document.createElement("a"); a.href=url; a.download=f.name; document.body.appendChild(a); a.click(); a.remove(); }catch(e){}
+      rowDone(row,"saved ✓");
+      var save=row.querySelector(".xfer-act"); save.outerHTML='<a class="xfer-act" href="'+url+'" download="'+f.name.replace(/"/g,'')+'">Save again</a>';
+      toast("Saved "+f.name);
+    }).catch(function(e){ btn.style.display=""; showError("Download interrupted", friendly(e)); });
+  }
+  function stopPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+
+  // ---- share view ----
+  function renderShare(code){
+    $("codeText").textContent=code;
+    var link = cfg.url ? cfg.url+"?code="+code : "";
+    var qr=$("qr"); qr.innerHTML="";
+    if(link && window.QRCode){
+      try{ new QRCode(qr,{text:link,width:152,height:152,colorDark:"#172139",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+        $("qrWrap").style.display=""; }catch(e){ $("qrWrap").style.display="none"; }
+    } else { $("qrWrap").style.display="none"; }
+    $("copyLink").style.display = link ? "" : "none";
+  }
+  function stampPostmark(){
+    $("pmCode").textContent=(sessionCode||"······").toUpperCase();
+    $("pmDate").textContent=new Date().toLocaleDateString(undefined,{day:"2-digit",month:"short"});
+    $("postmark").classList.add("show");
+  }
+
+  function friendly(e){
+    var msg = (e && e.message) ? e.message : "Please try again.";
+    return msg + " If it keeps happening, reload and start over.";
+  }
+  function showError(title,body){ stopPoll(); $("errTitle").textContent=title; $("errBody").textContent=body;
+    setStatus("warn","Stopped"); show("error"); }
+
+  // ---- events ----
+  var dz=$("dropzone"), fi=$("fileInput");
+  dz.addEventListener("click",function(){ fi.click(); });
+  dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" ") fi.click(); });
+  fi.addEventListener("change",function(){ if(fi.files.length){ pickFiles(fi.files); fi.value=""; } });
+  ["dragenter","dragover"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add("over"); }); });
+  ["dragleave","drop"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.remove("over"); }); });
+  dz.addEventListener("drop",function(e){ if(e.dataTransfer&&e.dataTransfer.files.length) pickFiles(e.dataTransfer.files); });
+
+  $("joinBtn").addEventListener("click",function(){ startReceive($("joinInput").value); });
+  $("joinInput").addEventListener("keydown",function(e){ if(e.key==="Enter") startReceive(this.value); });
+  $("codeText").addEventListener("click",function(){ copy(sessionCode,"Code copied"); });
+  $("copyCode").addEventListener("click",function(){ copy(sessionCode,"Code copied"); });
+  $("copyLink").addEventListener("click",function(){ if(cfg.url) copy(cfg.url+"?code="+sessionCode,"Link copied"); });
+  $("newBtn").addEventListener("click",function(){ sessionCode=""; show("home"); setStatus("live","Ready"); $("postmark").classList.remove("show"); });
+  $("refreshBtn").addEventListener("click",function(){ refreshReceive(false); });
+  $("backBtn").addEventListener("click",function(){ stopPoll(); recvRows={}; show("home"); setStatus("live","Ready"); });
+  $("retryBtn").addEventListener("click",function(){ recvRows={}; sessionCode=""; show("home"); setStatus("live","Ready"); });
+  function copy(text,msg){ try{ navigator.clipboard.writeText(text); }catch(e){} toast(msg); }
+
+  // ---- Return to Home ----
+  window.goHome = function(){
+    window.location.href = "../../index.html";
+  };
+
+  // ---- boot ----
+  setStatus("busy","Getting ready…");
+  gs("getConfig").then(function(c){
+    cfg=c||cfg; $("ttlTxt").textContent=cfg.ttlHours; $("ttlFoot").textContent=cfg.ttlHours;
+    setStatus("live","Ready");
+    google.script.url.getLocation(function(loc){
+      var code = loc && loc.parameter && loc.parameter.code;
+      if(code){ startReceive(code); } else { show("home"); }
+    });
+  }).catch(function(e){
+    setStatus("live","Ready"); show("home"); // still usable; config is optional
+  });
+})();
+</script>
+</body>
+</html>
