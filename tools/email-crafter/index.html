@@ -344,12 +344,20 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
       <button class="modal-close" onclick="closeModal('sendOverlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="callout ok" id="sendConfigNote">
+      <div class="field">
+        <label>How would you like to send?</label>
+        <select id="methodSel" onchange="onMethodChange()">
+          <option value="copy">Copy design &amp; open Gmail compose</option>
+          <option value="draft">Create a Gmail draft to review</option>
+          <option value="direct">Send / schedule directly</option>
+        </select>
+      </div>
+      <div class="callout ok" id="sendNoteWrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
-        <span>This email will be sent from <b id="sendFromEmail">your Google account</b>. Each recipient gets an individual copy.</span>
+        <span id="sendNote"></span>
       </div>
       <div class="field">
-        <label>Recipients</label>
+        <label>Recipients <span style="font-weight:500;color:var(--ink-3)">(optional for copy method)</span></label>
         <input type="text" id="recipInput" placeholder="name@example.com — press Enter to add" onkeydown="recipKey(event)" />
         <div class="recip-chips" id="recipChips"></div>
       </div>
@@ -359,23 +367,25 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
       </div>
       <div class="field"><label>Subject</label><input type="text" id="subjectLine" placeholder="Subject line" /></div>
       <div class="field"><label>Preheader <span style="font-weight:500;color:var(--ink-3)">(inbox preview text)</span></label><input type="text" id="preheader" placeholder="One line shown after the subject in the inbox" /></div>
-      <div class="field">
-        <label>Delivery</label>
-        <select id="freqSel" onchange="onFreqChange()">
-          <option value="now">Send now</option>
-          <option value="once">Schedule for later</option>
-          <option value="daily">Recurring — every day</option>
-          <option value="weekly">Recurring — every week</option>
-          <option value="monthly">Recurring — every month</option>
-        </select>
+      <div id="deliveryWrap">
+        <div class="field">
+          <label>Delivery</label>
+          <select id="freqSel" onchange="onFreqChange()">
+            <option value="now">Send now</option>
+            <option value="once">Schedule for later</option>
+            <option value="daily">Recurring — every day</option>
+            <option value="weekly">Recurring — every week</option>
+            <option value="monthly">Recurring — every month</option>
+          </select>
+        </div>
+        <div id="schedFields"></div>
       </div>
-      <div id="schedFields"></div>
       <div class="status-msg" id="sendStatus"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('sendOverlay')">Cancel</button>
-      <button class="btn btn-soft" onclick="sendTest()">Send test to me</button>
-      <button class="btn btn-primary" id="sendBtn" onclick="onPrimarySend()">Send now</button>
+      <button class="btn btn-soft" id="testBtn" onclick="sendTest()" style="display:none">Send test to me</button>
+      <button class="btn btn-primary" id="sendBtn" onclick="primaryAction()">Copy &amp; open Gmail</button>
     </div>
   </div>
 </div>
@@ -1158,9 +1168,38 @@ function downloadHTML(){
    ============================================================ */
 function openSend(){
   loadSettings();
-  if(currentUser){ document.getElementById('sendFromEmail').textContent=currentUser; if(!document.getElementById('fromName').value) document.getElementById('fromName').value=''; }
-  const fs=document.getElementById('freqSel'); if(fs){ fs.value='now'; onFreqChange(); }
+  // server-only methods disabled when running as a static site
+  const opts=document.getElementById('methodSel').options;
+  for(let i=0;i<opts.length;i++){ if(opts[i].value!=='copy') opts[i].disabled=!hasServer; }
+  document.getElementById('methodSel').value='copy';
+  const fs=document.getElementById('freqSel'); if(fs) fs.value='now';
+  onMethodChange(); onFreqChange();
   document.getElementById('sendOverlay').classList.add('show');
+}
+function onMethodChange(){
+  const m=document.getElementById('methodSel').value;
+  const note=document.getElementById('sendNote');
+  const testBtn=document.getElementById('testBtn');
+  const delivery=document.getElementById('deliveryWrap');
+  const btn=document.getElementById('sendBtn');
+  delivery.style.display = (m==='direct') ? 'block' : 'none';
+  testBtn.style.display = (hasServer && (m==='direct'||m==='draft')) ? 'inline-flex' : 'none';
+  if(m==='copy'){
+    note.innerHTML='Your design is copied to the clipboard and Gmail opens with the recipient and subject filled in. Click into the message body, press <b>Ctrl&nbsp;+&nbsp;V</b> (Cmd&nbsp;+&nbsp;V), and send from your own account. No sign-in needed.';
+    btn.textContent='Copy & open Gmail';
+  } else if(m==='draft'){
+    note.innerHTML='Creates a ready-to-send <b>draft in your Gmail</b>, with the full design and images intact. Open Gmail → Drafts to review and send.';
+    btn.textContent='Create draft';
+  } else {
+    note.innerHTML='Sends now, or on a schedule, straight from <b>'+(currentUser||'your account')+'</b>. Each recipient gets an individual copy.';
+    btn.textContent=(document.getElementById('freqSel').value==='now')?'Send now':'Schedule';
+  }
+}
+function primaryAction(){
+  const m=document.getElementById('methodSel').value;
+  if(m==='copy') copyAndCompose();
+  else if(m==='draft') saveDraft();
+  else onPrimarySend();
 }
 function recipKey(e){
   if(e.key==='Enter'||e.key===','){ e.preventDefault(); addRecip(); }
@@ -1221,8 +1260,65 @@ async function sendTest(){
 }
 
 /* ============================================================
-   Recurring / scheduled sends
+   Method 1 — Copy design & open Gmail compose (no login)
    ============================================================ */
+function generateEmailBody(mode){
+  EMAIL_MODE=(mode==='send')?'send':'preview';
+  const bodyRows=doc.blocks.map(blockToEmail).join('\n');
+  return `<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background-color:#ffffff;border-collapse:collapse;font-family:${settings.font}">${bodyRows}</table>`;
+}
+function legacyCopyHtml(html){
+  const div=document.createElement('div');
+  div.contentEditable='true'; div.innerHTML=html;
+  div.style.position='fixed'; div.style.left='-99999px'; div.style.top='0';
+  document.body.appendChild(div);
+  const range=document.createRange(); range.selectNodeContents(div);
+  const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  let ok=false; try{ ok=document.execCommand('copy'); }catch(e){}
+  sel.removeAllRanges(); document.body.removeChild(div);
+  return ok;
+}
+async function copyAndCompose(){
+  addRecip();
+  const subject=document.getElementById('subjectLine').value.trim();
+  const html=generateEmailBody('preview'); // public image URLs, survives Gmail paste
+  let copied=false;
+  try{
+    if(navigator.clipboard && window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html],{type:'text/html'}),
+        'text/plain': new Blob([html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()],{type:'text/plain'})
+      })]);
+      copied=true;
+    } else { copied=legacyCopyHtml(html); }
+  }catch(e){ copied=legacyCopyHtml(html); }
+
+  const to=encodeURIComponent(recipients.join(','));
+  const su=encodeURIComponent(subject);
+  const gmailUrl='https://mail.google.com/mail/?view=cm&fs=1&tf=1'+(to?'&to='+to:'')+(su?'&su='+su:'');
+  window.open(gmailUrl,'_blank');
+
+  if(copied) sendStatus('Design copied ✓ — in the Gmail window, click the message body, press Ctrl+V (Cmd+V), then Send.',true);
+  else sendStatus('Gmail opened. If paste is empty, use the "HTML" button to copy the design, then paste it in.',false);
+}
+
+/* ============================================================
+   Method 2 — Create a Gmail draft (needs Apps Script deployment)
+   ============================================================ */
+async function saveDraft(){
+  addRecip();
+  if(!hasServer){ sendStatus('Drafts need the Apps Script deployment. On a static site, use “Copy design & open Gmail”.',false); return; }
+  if(!recipients.length){ sendStatus('Add at least one recipient.',false); return; }
+  const subject=document.getElementById('subjectLine').value.trim();
+  if(!subject){ sendStatus('Add a subject line.',false); return; }
+  const btn=document.getElementById('sendBtn'); btn.textContent='Creating…'; btn.disabled=true;
+  try{
+    const r=await new Promise((res,rej)=>google.script.run.withSuccessHandler(res).withFailureHandler(rej).createDraft(buildSendPayload(recipients,subject)));
+    if(r&&r.ok){ sendStatus('Draft created in your Gmail ✓ — open Gmail → Drafts to review and send.',true); toast('Draft created'); }
+    else sendStatus('Could not create draft: '+((r&&r.error)||'unknown error'),false);
+  }catch(err){ sendStatus('Draft error: '+(err.message||err),false); }
+  btn.textContent='Create draft'; btn.disabled=false;
+}
 function onFreqChange(){
   const f=document.getElementById('freqSel').value;
   const c=document.getElementById('schedFields');
@@ -1234,7 +1330,8 @@ function onFreqChange(){
   else if(f==='weekly'){ h='<div class="row2"><div class="field"><label>Weekday</label><select id="schedWeekday">'+days.map(d=>`<option value="${d[0]}">${d[1]}</option>`).join('')+'</select></div><div class="field"><label>At</label>'+hourSel+'</div></div>'; }
   else if(f==='monthly'){ h='<div class="row2"><div class="field"><label>Day of month</label><input type="number" id="schedDay" min="1" max="28" value="1" /></div><div class="field"><label>At</label>'+hourSel+'</div></div>'; }
   c.innerHTML=h;
-  document.getElementById('sendBtn').textContent = (f==='now') ? 'Send now' : 'Schedule';
+  if(document.getElementById('methodSel').value==='direct')
+    document.getElementById('sendBtn').textContent = (f==='now') ? 'Send now' : 'Schedule';
 }
 function buildSchedule(){
   const f=document.getElementById('freqSel').value;
@@ -1361,8 +1458,8 @@ function initAuth(){
   function reveal(html){ if(revealed) return; revealed=true; const a=document.getElementById('landingAuth'); if(a) a.innerHTML=html; }
 
   if(!hasServer){
-    reveal('<button class="btn btn-primary" style="font-size:14px;padding:11px 22px" onclick="enterStudio()">Open the designer (preview mode)</button>'+
-      '<div style="font-size:11px;color:#9a9ac0;margin-top:14px">Deploy to Apps Script to enable Google sign-in, sending and uploads.</div>');
+    reveal('<button class="btn btn-primary" style="font-size:14px;padding:12px 24px" onclick="enterStudio()">Start designing</button>'+
+      '<div style="font-size:11px;color:#9a9ac0;margin-top:14px">Design and send via Gmail copy-and-paste — no sign-in needed. Deploy on Apps Script to also create drafts or send directly.</div>');
     return;
   }
 
