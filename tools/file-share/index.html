@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sallu Tech File Share - Secure File Transfer</title>
+<title>Sallu Tech File Share — Dispatch</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -13,8 +12,7 @@
     --air-red:#C0392B; --air-blue:#2C5AA0; --muted:#8e8975; --line:#e2ddcd;
     --line-2:#d3ccb8; --ok:#2c7a59; --shadow:0 24px 60px -28px rgba(23,33,57,.45); --r:10px;
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
   body{font-family:"Hanken Grotesk",system-ui,sans-serif;color:var(--ink);
     background:radial-gradient(1200px 600px at 50% -10%, #fffdf6 0%, transparent 60%),var(--paper);
     min-height:100dvh;display:flex;align-items:flex-start;justify-content:center;
@@ -46,7 +44,7 @@
   .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none;position:relative}
   .dot.live{background:var(--ok)} .dot.warn{background:var(--air-red)} .dot.busy{background:var(--air-blue)}
   .dot.busy::after,.dot.live::after{content:"";position:absolute;inset:-4px;border-radius:50%;
-    border:1px solid currentColor;color:inherit;opacity:.5;animation:pulse 1.8s ease-out infinite}
+    border:1px solid currentColor;opacity:.5;animation:pulse 1.8s ease-out infinite}
   @keyframes pulse{0%{transform:scale(.6);opacity:.6}100%{transform:scale(1.8);opacity:0}}
   @media (prefers-reduced-motion:reduce){.dot::after{animation:none;opacity:.4}}
   .panel{display:none} .panel.active{display:block}
@@ -57,7 +55,16 @@
   .dz-ico{width:40px;height:40px;margin:0 auto 10px;color:var(--air-blue)}
   .dz-title{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:18px;margin:0}
   .dz-sub{margin:5px 0 0;font-size:13px;color:var(--muted)}
-  .divider{display:flex;align-items:center;gap:12px;margin:20px 0 16px;color:var(--muted);
+  .opt{display:flex;align-items:center;gap:11px;margin-top:14px;cursor:pointer;font-size:13px;color:var(--ink-soft);line-height:1.4}
+  .opt input{position:absolute;opacity:0;width:0;height:0}
+  .opt-box{position:relative;width:40px;height:23px;border-radius:99px;background:var(--line-2);flex:none;transition:background .15s}
+  .opt-box::after{content:"";position:absolute;top:2.5px;left:2.5px;width:18px;height:18px;border-radius:50%;
+    background:#fff;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .opt input:checked + .opt-box{background:var(--air-red)}
+  .opt input:checked + .opt-box::after{transform:translateX(17px)}
+  .opt input:focus-visible + .opt-box{box-shadow:0 0 0 3px rgba(192,57,43,.25)}
+  .opt-txt{flex:1}
+  .divider{display:flex;align-items:center;gap:12px;margin:18px 0 16px;color:var(--muted);
     font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.2em}
   .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
   .join{display:flex;gap:9px}
@@ -65,7 +72,7 @@
     padding:12px 14px;border:1.5px solid var(--line-2);border-radius:9px;background:#fff;color:var(--ink);
     text-transform:lowercase;min-width:0}
   input[type=text]:focus{outline:none;border-color:var(--air-blue);box-shadow:0 0 0 3px rgba(44,90,160,.12)}
-  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  button{font-family:inherit;cursor:pointer;border:none}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 16px;border-radius:9px;
     font-size:14px;font-weight:600;background:var(--ink);color:#fff;transition:transform .08s,background .15s;letter-spacing:.01em}
   .btn:hover{background:#0f1830} .btn:active{transform:translateY(1px)} .btn:disabled{opacity:.45;cursor:not-allowed}
@@ -73,8 +80,6 @@
   .btn.ghost:hover{background:#fff}
   .btn.full{width:100%} .btn svg{width:16px;height:16px}
   .join .btn{flex:none;padding:12px 20px}
-  .btn-home{background:var(--air-blue);color:#fff;margin-top:12px}
-  .btn-home:hover{background:#1e4675}
   .codebox{text-align:center;margin:2px 0 16px}
   .code-label{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
   .code{font-family:"Space Mono",monospace;font-weight:700;font-size:clamp(34px,9vw,46px);letter-spacing:.18em;
@@ -97,9 +102,8 @@
   .xfer-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .xfer-info{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--muted);margin-top:1px;letter-spacing:.02em}
   .xfer-act{font-size:12px;font-weight:600;color:#fff;background:var(--air-blue);white-space:nowrap;
-    padding:7px 13px;border-radius:7px;text-decoration:none}
+    padding:7px 13px;border-radius:7px;text-decoration:none;cursor:pointer}
   .xfer-act:hover{background:#234c87}
-  .xfer-act.ghost{background:transparent;color:var(--air-blue);border:1.5px solid var(--line-2)}
   .bar{height:5px;border-radius:99px;background:var(--line);margin-top:10px;overflow:hidden}
   .bar span{display:block;height:100%;width:0;background:var(--air-blue);border-radius:99px;transition:width .12s linear}
   .xfer.done .bar span{background:var(--ok)}
@@ -118,37 +122,41 @@
     <header>
       <p class="eyebrow">Sallu Tech · File Share</p>
       <h1>Dispatch</h1>
-      <p class="tag">Share files directly using QR code or 6-character code. No storage, no tracking, completely private.</p>
+      <p class="tag">Share a file to any device with a 6-character code — and burn it after a single download.</p>
     </header>
 
     <div class="envelope">
       <div class="card">
         <div class="postmark" id="postmark">
-          <div class="pm-in"><div class="pm-t">SHARED</div><div class="pm-c" id="pmCode">······</div><div class="pm-d" id="pmDate">— · —</div></div>
+          <div class="pm-in"><div class="pm-t">DISPATCHED</div><div class="pm-c" id="pmCode">······</div><div class="pm-d" id="pmDate">— · —</div></div>
         </div>
 
         <div class="status"><span class="dot" id="dot"></span><span id="statusText">Getting ready…</span></div>
 
         <!-- HOME -->
-        <section class="panel active" id="panelHome">
+        <section class="panel" id="panelHome">
           <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose files to send">
             <svg class="dz-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
             <p class="dz-title">Drop files to share</p>
             <p class="dz-sub">or tap to choose — you'll get a code to share</p>
             <input type="file" id="fileInput" multiple hidden>
           </div>
+          <label class="opt">
+            <input type="checkbox" id="oneTime" checked>
+            <span class="opt-box"></span>
+            <span class="opt-txt">One-time link — the file is deleted the moment it's downloaded once</span>
+          </label>
           <div class="divider">OR RECEIVE A FILE</div>
           <div class="join">
             <input type="text" id="joinInput" inputmode="latin" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="abc123" maxlength="6">
             <button class="btn" id="joinBtn">Receive</button>
           </div>
-          <button class="btn btn-home btn-full" onclick="goHome()">← Return to Home</button>
         </section>
 
         <!-- SHARE (after sending) -->
         <section class="panel" id="panelShare">
           <div class="codebox">
-            <div class="code-label">Share Code</div>
+            <div class="code-label">Pickup code</div>
             <span class="code" id="codeText" title="Tap to copy">······</span>
           </div>
           <div class="qr-wrap" id="qrWrap"><div class="qr" id="qr"></div></div>
@@ -157,9 +165,8 @@
             <button class="btn ghost" id="copyCode">Copy code</button>
           </div>
           <div class="xfers" id="xfersSend"></div>
-          <p class="note" id="shareNote">On the other device, open this tool and enter this code (or scan the QR). Files stay available for <b id="ttlTxt">24</b> hours.</p>
+          <p class="note" id="shareNote"></p>
           <div class="btn-row"><button class="btn ghost full" id="newBtn">Share more files</button></div>
-          <button class="btn btn-home btn-full" onclick="goHome()">← Return to Home</button>
         </section>
 
         <!-- RECEIVE -->
@@ -171,7 +178,6 @@
             <button class="btn ghost" id="backBtn">Back</button>
           </div>
           <p class="note" id="recvNote">Tap Save on each file. If something's missing, the sender may still be uploading — hit Refresh.</p>
-          <button class="btn btn-home btn-full" onclick="goHome()">← Return to Home</button>
         </section>
 
         <!-- ERROR -->
@@ -179,23 +185,29 @@
           <p class="err-title" id="errTitle">Something went sideways</p>
           <p class="err-body" id="errBody"></p>
           <div class="btn-row"><button class="btn" id="retryBtn">Start over</button></div>
-          <button class="btn btn-home btn-full" onclick="goHome()">← Return to Home</button>
         </section>
       </div>
     </div>
 
-    <footer>Files relay privately and auto-delete after <span id="ttlFoot">24</span>h<br>nothing is shared publicly or stored</footer>
+    <footer>Files relay privately through Drive and auto-delete after <span id="ttlFoot">24</span>h<br>nothing is shared publicly or stored</footer>
   </div>
   <div class="toast" id="toast"></div>
 
 <script>
 (function(){
   "use strict";
-  var CHUNK = 1.5 * 1024 * 1024; // bytes per upload/download round-trip
+
+  /* ====================================================================
+   *  SETUP — paste your Apps Script Web App URL here (ends with /exec)
+   *  Deploy > New deployment > Web app > Execute as: Me, Access: Anyone
+   * ==================================================================== */
+  var API_URL = "https://script.google.com/macros/s/AKfycbyeKayw_OoyM3t4ddDQj5czjqONkRP4-yEvrcNuB032FBrNmMBflca3pWpo04FMgrO-/exec";
+
+  var CHUNK  = 4 * 1024 * 1024;  // bytes per round-trip
   var POLL_MS = 5000;
 
-  var cfg = { url:"", ttlHours:24 };
-  var sessionCode = "", pollTimer = null;
+  var sessionCode = "", pollTimer = null, shareTimer = null;
+  var oneTimeMode = true, sendRows = {}, sentKeys = [], recvRows = {};
 
   var $ = function(id){ return document.getElementById(id); };
   var dot = $("dot"), statusText = $("statusText");
@@ -208,12 +220,18 @@
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
   function fmtBytes(n){ if(n<1024)return n+" B"; var u=["KB","MB","GB"],i=-1;
     do{n/=1024;i++;}while(n>=1024&&i<u.length-1); return n.toFixed(n<10?1:0)+" "+u[i]; }
+  function friendly(e){ var m=(e&&e.message)?e.message:"Please try again."; return m+" If it keeps happening, reload and start over."; }
 
-  // ---- google.script.run as promises ----
-  function gs(fn){
-    var args = Array.prototype.slice.call(arguments,1);
-    return new Promise(function(res,rej){
-      google.script.run.withSuccessHandler(res).withFailureHandler(function(e){ rej(e); })[fn].apply(google.script.run, args);
+  /* ---- API layer: fetch with text/plain to avoid CORS preflight ---- */
+  function api(payload){
+    return fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+      redirect: "follow"
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (data && data.error) throw new Error(data.error);
+      return data;
     });
   }
   function blobToB64(blob){
@@ -229,7 +247,7 @@
     return out;
   }
 
-  // ---- transfer rows ----
+  /* ---- transfer rows ---- */
   var UP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></svg>';
   var DN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></svg>';
   function addRow(box, dir, name, size){
@@ -244,56 +262,59 @@
   function rowDone(el,label){ if(!el)return; el.classList.add("done"); el.querySelector(".bar span").style.width="100%";
     el.querySelector(".xfer-info").textContent=label; }
 
-  // ---- SEND ----
+  /* ---- SEND ---- */
   function pickFiles(files){
     if(!files||!files.length) return;
+    oneTimeMode = $("oneTime").checked;
     show("share"); setStatus("busy","Uploading…");
-    $("xfersSend").innerHTML="";
+    $("xfersSend").innerHTML=""; sendRows={}; sentKeys=[]; stopShareWatch();
+    $("copyLink").disabled=false; $("copyCode").disabled=false;
     var arr=Array.prototype.slice.call(files);
-    var p = sessionCode ? Promise.resolve(sessionCode) : gs("createSession");
-    p.then(function(code){
-      sessionCode=code; renderShare(code);
+    // one-time always mints a fresh single-use link
+    var need = (sessionCode && !oneTimeMode) ? Promise.resolve(sessionCode)
+                                             : api({action:"create", oneTime:oneTimeMode}).then(function(r){ return r.code; });
+    need.then(function(code){
+      sessionCode=code; renderShare(code); updateShareNote();
       return arr.reduce(function(chain,file){ return chain.then(function(){ return sendOne(code,file); }); }, Promise.resolve());
     }).then(function(){
-      setStatus("live","Ready to receive"); stampPostmark();
+      setStatus("live","Ready to pick up"); stampPostmark();
+      if(oneTimeMode) watchDelivery(sessionCode, sentKeys.slice());
     }).catch(function(e){ showError("Upload couldn't finish", friendly(e)); });
   }
   function sendOne(code,file){
     var key=uid(), total=Math.max(1,Math.ceil(file.size/CHUNK));
-    var row=addRow($("xfersSend"),"up",file.name,file.size), start=Date.now(), done=0;
+    var row=addRow($("xfersSend"),"up",file.name,file.size), start=Date.now();
+    sendRows[key]=row; sentKeys.push(key);
     var seq=Promise.resolve();
     for(var i=0;i<total;i++){ (function(idx){
       seq=seq.then(function(){
-        var slice=file.slice(idx*CHUNK,(idx+1)*CHUNK);
-        return blobToB64(slice).then(function(b64){
-          return gs("uploadChunk",code,key,file.type||"",idx,b64);
+        return blobToB64(file.slice(idx*CHUNK,(idx+1)*CHUNK)).then(function(b64){
+          return api({action:"upload", code:code, fileKey:key, mime:file.type||"", index:idx, data:b64});
         }).then(function(){
-          done++; var secs=(Date.now()-start)/1000;
+          var done=idx+1, secs=(Date.now()-start)/1000;
           setBar(row,done/total, fmtBytes(Math.min(file.size,done*CHUNK))+" / "+fmtBytes(file.size)+(secs>0?" · "+fmtBytes(done*CHUNK/secs)+"/s":""));
         });
       });
     })(i); }
     return seq.then(function(){
-      return gs("finalizeFile",code,key,file.name,file.type||"",total,file.size);
+      return api({action:"finalize", code:code, fileKey:key, name:file.name, mime:file.type||"", parts:total, size:file.size});
     }).then(function(){ rowDone(row,"uploaded ✓"); });
   }
 
-  // ---- RECEIVE ----
+  /* ---- RECEIVE ---- */
   function startReceive(code){
     code=String(code||"").trim().toLowerCase(); if(!code) return;
-    sessionCode=code; stopPoll();
+    sessionCode=code; stopPoll(); recvRows={};
     show("receive"); $("recvCode").textContent=code; $("xfersRecv").innerHTML="";
+    $("recvNote").innerHTML="Tap Save on each file. If something's missing, the sender may still be uploading — hit Refresh.";
     setStatus("busy","Looking up that code…");
-    refreshReceive(true);
-    pollTimer=setInterval(function(){ refreshReceive(false); }, POLL_MS);
+    refreshReceive();
+    pollTimer=setInterval(refreshReceive, POLL_MS);
   }
-  var recvRows={};
-  function refreshReceive(first){
-    gs("listSession",sessionCode).then(function(m){
+  function refreshReceive(){
+    api({action:"list", code:sessionCode}).then(function(m){
       setStatus("live","Connected");
-      var files=(m.files||[]);
-      if(!files.length && first){ /* nothing yet */ }
-      files.forEach(function(f){
+      (m.files||[]).forEach(function(f){
         if(recvRows[f.key]) return;
         var row=addRow($("xfersRecv"),"down",f.name,f.size);
         var btn=row.querySelector(".xfer-act"); btn.textContent="Save"; btn.style.display="";
@@ -304,13 +325,13 @@
   }
   function pullFile(f,row,btn){
     btn.style.display="none";
-    var parts=[], start=Date.now(), got=0;
+    var parts=[], start=Date.now();
     var seq=Promise.resolve();
     for(var i=0;i<f.parts;i++){ (function(idx){
       seq=seq.then(function(){
-        return gs("downloadChunk",sessionCode,f.key,idx).then(function(b64){
-          parts.push(b64ToBytes(b64)); got++;
-          var secs=(Date.now()-start)/1000;
+        return api({action:"download", code:sessionCode, fileKey:f.key, index:idx}).then(function(r){
+          parts.push(b64ToBytes(r.data));
+          var got=idx+1, secs=(Date.now()-start)/1000;
           setBar(row,got/(f.parts||1), fmtBytes(Math.min(f.size,got*CHUNK))+" / "+fmtBytes(f.size)+(secs>0?" · "+fmtBytes(got*CHUNK/secs)+"/s":""));
         });
       });
@@ -320,22 +341,49 @@
       var url=URL.createObjectURL(blob);
       try{ var a=document.createElement("a"); a.href=url; a.download=f.name; document.body.appendChild(a); a.click(); a.remove(); }catch(e){}
       rowDone(row,"saved ✓");
-      var save=row.querySelector(".xfer-act"); save.outerHTML='<a class="xfer-act" href="'+url+'" download="'+f.name.replace(/"/g,'')+'">Save again</a>';
+      var save=row.querySelector(".xfer-act"); save.outerHTML='<a class="xfer-act" href="'+url+'" download="'+f.name.replace(/"/g,"")+'">Save again</a>';
       toast("Saved "+f.name);
-    }).catch(function(e){ btn.style.display=""; showError("Download interrupted", friendly(e)); });
+      return api({action:"done", code:sessionCode, fileKey:f.key});
+    }).then(function(res){
+      if(res && res.closed){ stopPoll();
+        $("recvNote").innerHTML="Done. That was a <b>one-time link</b> — the file has now been deleted from the relay.";
+        setStatus("live","Picked up — link closed"); }
+    }).catch(function(e){ if(btn) btn.style.display=""; showError("Download interrupted", friendly(e)); });
   }
   function stopPoll(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
 
-  // ---- share view ----
+  /* ---- sender watches for pickup (one-time) ---- */
+  function watchDelivery(code, keys){
+    stopShareWatch();
+    shareTimer=setInterval(function(){
+      api({action:"list", code:code}).then(function(m){
+        var present={}; (m.files||[]).forEach(function(f){ present[f.key]=true; });
+        keys.forEach(function(k){ if(!present[k]) markDelivered(k); });
+        if(keys.every(function(k){ return sendRows[k] && sendRows[k]._done; })) shareClosed();
+      }).catch(function(){ keys.forEach(markDelivered); shareClosed(); });
+    }, POLL_MS);
+  }
+  function markDelivered(k){ var row=sendRows[k]; if(row && !row._done){ row._done=true; rowDone(row,"picked up ✓ · deleted"); } }
+  function shareClosed(){ stopShareWatch(); setStatus("live","Delivered — link closed");
+    $("shareNote").innerHTML="Delivered. This one-time link is now <b>closed</b> and the file has been deleted.";
+    $("qrWrap").style.display="none"; $("copyLink").disabled=true; $("copyCode").disabled=true; }
+  function stopShareWatch(){ if(shareTimer){ clearInterval(shareTimer); shareTimer=null; } }
+
+  /* ---- share view ---- */
+  function shareLink(code){ return location.origin + location.pathname + "?code=" + code; }
+  function updateShareNote(){
+    $("shareNote").innerHTML = oneTimeMode
+      ? "This is a <b>one-time link</b>. It stops working the instant the file is picked up once."
+      : "On the other device, open this page and enter the code (or scan the QR). Files stay available for <b>24</b> hours.";
+  }
   function renderShare(code){
     $("codeText").textContent=code;
-    var link = cfg.url ? cfg.url+"?code="+code : "";
-    var qr=$("qr"); qr.innerHTML="";
-    if(link && window.QRCode){
+    var link=shareLink(code), qr=$("qr"); qr.innerHTML="";
+    if(window.QRCode){
       try{ new QRCode(qr,{text:link,width:152,height:152,colorDark:"#172139",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
         $("qrWrap").style.display=""; }catch(e){ $("qrWrap").style.display="none"; }
     } else { $("qrWrap").style.display="none"; }
-    $("copyLink").style.display = link ? "" : "none";
+    $("copyLink").style.display="";
   }
   function stampPostmark(){
     $("pmCode").textContent=(sessionCode||"······").toUpperCase();
@@ -343,14 +391,10 @@
     $("postmark").classList.add("show");
   }
 
-  function friendly(e){
-    var msg = (e && e.message) ? e.message : "Please try again.";
-    return msg + " If it keeps happening, reload and start over.";
-  }
-  function showError(title,body){ stopPoll(); $("errTitle").textContent=title; $("errBody").textContent=body;
+  function showError(title,body){ stopPoll(); stopShareWatch(); $("errTitle").textContent=title; $("errBody").textContent=body;
     setStatus("warn","Stopped"); show("error"); }
 
-  // ---- events ----
+  /* ---- events ---- */
   var dz=$("dropzone"), fi=$("fileInput");
   dz.addEventListener("click",function(){ fi.click(); });
   dz.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" ") fi.click(); });
@@ -362,30 +406,31 @@
   $("joinBtn").addEventListener("click",function(){ startReceive($("joinInput").value); });
   $("joinInput").addEventListener("keydown",function(e){ if(e.key==="Enter") startReceive(this.value); });
   $("codeText").addEventListener("click",function(){ copy(sessionCode,"Code copied"); });
-  $("copyCode").addEventListener("click",function(){ copy(sessionCode,"Code copied"); });
-  $("copyLink").addEventListener("click",function(){ if(cfg.url) copy(cfg.url+"?code="+sessionCode,"Link copied"); });
-  $("newBtn").addEventListener("click",function(){ sessionCode=""; show("home"); setStatus("live","Ready"); $("postmark").classList.remove("show"); });
-  $("refreshBtn").addEventListener("click",function(){ refreshReceive(false); });
+  $("copyCode").addEventListener("click",function(){ if(!$("copyCode").disabled) copy(sessionCode,"Code copied"); });
+  $("copyLink").addEventListener("click",function(){ if(!$("copyLink").disabled) copy(shareLink(sessionCode),"Link copied"); });
+  $("newBtn").addEventListener("click",function(){ stopShareWatch(); sessionCode="";
+    $("copyLink").disabled=false; $("copyCode").disabled=false; show("home"); setStatus("live","Ready"); $("postmark").classList.remove("show"); });
+  $("refreshBtn").addEventListener("click",function(){ refreshReceive(); });
   $("backBtn").addEventListener("click",function(){ stopPoll(); recvRows={}; show("home"); setStatus("live","Ready"); });
-  $("retryBtn").addEventListener("click",function(){ recvRows={}; sessionCode=""; show("home"); setStatus("live","Ready"); });
+  $("retryBtn").addEventListener("click",function(){ stopPoll(); stopShareWatch(); recvRows={}; sessionCode="";
+    $("copyLink").disabled=false; $("copyCode").disabled=false; show("home"); setStatus("live","Ready"); });
   function copy(text,msg){ try{ navigator.clipboard.writeText(text); }catch(e){} toast(msg); }
 
-  // ---- Return to Home ----
-  window.goHome = function(){
-    window.location.href = "../../index.html";
-  };
-
-  // ---- boot ----
-  setStatus("busy","Getting ready…");
-  gs("getConfig").then(function(c){
-    cfg=c||cfg; $("ttlTxt").textContent=cfg.ttlHours; $("ttlFoot").textContent=cfg.ttlHours;
+  /* ---- boot ---- */
+  setStatus("busy","Connecting to backend…");
+  if(!API_URL || API_URL.indexOf("PASTE")===0){
+    showError("Backend not configured yet",
+      "Open index.html and set API_URL to your Apps Script Web App /exec URL, then push the page again.");
+    return;
+  }
+  fetch(API_URL).then(function(r){ return r.json(); }).then(function(h){
+    if(h && h.ttlHours){ $("ttlFoot").textContent=h.ttlHours; }
     setStatus("live","Ready");
-    google.script.url.getLocation(function(loc){
-      var code = loc && loc.parameter && loc.parameter.code;
-      if(code){ startReceive(code); } else { show("home"); }
-    });
-  }).catch(function(e){
-    setStatus("live","Ready"); show("home"); // still usable; config is optional
+    var code = new URLSearchParams(location.search).get("code");
+    if(code) startReceive(code); else show("home");
+  }).catch(function(){
+    showError("Can't reach the backend",
+      "Make sure API_URL is the deployed /exec URL and the web app's access is set to \"Anyone\". Then reload.");
   });
 })();
 </script>
