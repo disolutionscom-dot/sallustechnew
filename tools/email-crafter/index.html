@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989173811138340"
-     crossorigin="anonymous"></script>
-<!-- mail craft -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-2989173811138340"
-     data-ad-slot="6949298132"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MailCraft Studio — Email Designer</title>
@@ -173,7 +161,7 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
 .insp-empty svg{width:34px;height:34px;color:var(--border-strong);margin-bottom:12px}
 .field{margin-bottom:14px}
 .field>label{display:block;font-size:11px;font-weight:700;color:var(--ink-2);margin-bottom:6px;letter-spacing:.2px}
-.field input[type=text],.field input[type=url],.field input[type=number],.field textarea,.field select{
+.field input[type=text],.field input[type=url],.field input[type=number],.field input[type=datetime-local],.field textarea,.field select{
   width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--ink)
 }
 .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent);background:#fff}
@@ -255,6 +243,14 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
 }
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast svg{width:16px;height:16px;color:#86efac}
+@keyframes mcspin{to{transform:rotate(360deg)}}
+.mc-spin{width:16px;height:16px;border:2px solid rgba(168,155,255,.3);border-top-color:#a89bff;border-radius:50%;display:inline-block;animation:mcspin .7s linear infinite}
+.user-chip{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1px solid var(--border);border-radius:24px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.user-chip .ava{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#7c5cf0);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.upload-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;background:var(--accent-soft);color:var(--accent);border:1px dashed var(--accent);border-radius:8px;padding:9px;font-weight:600;font-size:12px;margin-bottom:8px;transition:.15s}
+.upload-btn:hover{background:#e2e2fa}
+.upload-btn svg{width:15px;height:15px}
+.upload-btn.busy{opacity:.6;pointer-events:none}
 
 @media(max-width:920px){
   .library{width:200px}.inspector{width:260px}
@@ -262,6 +258,21 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
 </style>
 </head>
 <body>
+
+<!-- ============ LANDING / SIGN-IN GATE ============ -->
+<div id="landing" style="position:fixed;inset:0;z-index:300;background:linear-gradient(160deg,#15152a 0%,#23234d 55%,#3a2f6b 100%);display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="max-width:440px;width:100%;text-align:center;color:#fff">
+    <div style="width:60px;height:60px;border-radius:16px;margin:0 auto 22px;background:linear-gradient(135deg,#5B5BD6,#7c5cf0);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 36px rgba(91,91,214,.5)">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="m4 7 8 6 8-6"/></svg>
+    </div>
+    <h1 style="font-size:30px;font-weight:800;letter-spacing:-.5px;margin-bottom:10px">Mail<span style="color:#a89bff">Craft</span> Studio</h1>
+    <p style="font-size:14.5px;line-height:1.6;color:#c5c5e0;margin-bottom:30px">Design branded, interactive emails and send them straight from your own Gmail. Sign in to start — your designs and media stay in your own Google account.</p>
+    <div id="landingAuth">
+      <div style="display:inline-flex;align-items:center;gap:10px;color:#a89bff;font-size:13px"><span class="mc-spin"></span> Checking your Google session…</div>
+    </div>
+    <p style="font-size:11.5px;color:#7a7aa0;margin-top:26px;line-height:1.6">Free &amp; open source · You send from your own account · We never store your emails</p>
+  </div>
+</div>
 
 <!-- ============ TOP BAR ============ -->
 <div class="topbar">
@@ -277,6 +288,10 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
     Templates
   </button>
+  <button class="btn btn-ghost" onclick="openScheduled()" title="Scheduled sends">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    Scheduled
+  </button>
   <button class="btn btn-ghost" onclick="openPreview()" title="Live preview">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
     Preview
@@ -285,6 +300,7 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
     HTML
   </button>
+  <div class="user-chip" id="userChip" style="display:none"><span class="ava" id="userAva">?</span><span id="userEmail">…</span></div>
   <button class="btn-icon" onclick="openSettings()" title="Settings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   </button>
@@ -328,9 +344,9 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
       <button class="modal-close" onclick="closeModal('sendOverlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="callout info" id="sendConfigNote">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        <span>Connect your Apps Script backend in <b>Settings</b> before sending. Your email is delivered from your own Gmail / Workspace account.</span>
+      <div class="callout ok" id="sendConfigNote">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        <span>This email will be sent from <b id="sendFromEmail">your Google account</b>. Each recipient gets an individual copy.</span>
       </div>
       <div class="field">
         <label>Recipients</label>
@@ -343,12 +359,23 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
       </div>
       <div class="field"><label>Subject</label><input type="text" id="subjectLine" placeholder="Subject line" /></div>
       <div class="field"><label>Preheader <span style="font-weight:500;color:var(--ink-3)">(inbox preview text)</span></label><input type="text" id="preheader" placeholder="One line shown after the subject in the inbox" /></div>
+      <div class="field">
+        <label>Delivery</label>
+        <select id="freqSel" onchange="onFreqChange()">
+          <option value="now">Send now</option>
+          <option value="once">Schedule for later</option>
+          <option value="daily">Recurring — every day</option>
+          <option value="weekly">Recurring — every week</option>
+          <option value="monthly">Recurring — every month</option>
+        </select>
+      </div>
+      <div id="schedFields"></div>
       <div class="status-msg" id="sendStatus"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('sendOverlay')">Cancel</button>
       <button class="btn btn-soft" onclick="sendTest()">Send test to me</button>
-      <button class="btn btn-primary" id="sendBtn" onclick="sendEmail()">Send now</button>
+      <button class="btn btn-primary" id="sendBtn" onclick="onPrimarySend()">Send now</button>
     </div>
   </div>
 </div>
@@ -363,12 +390,10 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
     <div class="modal-body">
       <div class="callout ok">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
-        <span>Saved locally in this browser only. Deploy the Apps Script file once, then paste the Web App URL and token here.</span>
+        <span>You're signed in with Google. Emails send from your own account and uploads go to your own Drive — nothing is stored on a third-party server.</span>
       </div>
-      <div class="insp-section" style="margin-top:0">Sending backend</div>
-      <div class="field"><label>Apps Script Web App URL</label><input type="url" id="setUrl" placeholder="https://script.google.com/macros/s/…/exec" /></div>
-      <div class="field"><label>Access token</label><input type="text" id="setToken" placeholder="Must match the token in your .gs file" /></div>
-      <div class="field"><label>Your own email (for test sends)</label><input type="text" id="setMyEmail" placeholder="you@example.com" /></div>
+      <div class="insp-section" style="margin-top:0">Account</div>
+      <div class="field"><label>Signed in as</label><input type="text" id="setMyEmail" readonly style="background:#f0f0f5;cursor:default" /></div>
       <div class="insp-section">Brand kit <span style="text-transform:none;font-weight:500;color:var(--ink-3)">— applied to new blocks</span></div>
       <div class="row2">
         <div class="field"><label>Brand colour</label><div class="color-field"><input type="color" id="setBrandColor" value="#5B5BD6" /><input type="text" id="setBrandColorHex" value="#5B5BD6" /></div></div>
@@ -456,6 +481,28 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
   </div>
 </div>
 
+<!-- ============ MODAL: SCHEDULED ============ -->
+<div class="overlay" id="schedOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Scheduled sends</h2>
+      <button class="modal-close" onclick="closeModal('schedOverlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="callout info">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>Scheduled emails are sent automatically from your own account. Times use the app's time zone. Recurring sends repeat until you cancel them here.</span>
+      </div>
+      <div class="tpl-list" id="schedList"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('schedOverlay')">Close</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="mediaFile" style="display:none" onchange="onMediaPicked(event)" />
+
 <div class="toast" id="toast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg><span id="toastMsg"></span></div>
 
 <script>
@@ -467,9 +514,12 @@ const SET_KEY='mailcraft_v2_settings';
 const TPL_KEY='mailcraft_v2_templates';
 
 let settings={
-  url:'', token:'', myEmail:'',
+  myEmail:'',
   brandColor:'#5B5BD6', btnRadius:8, logo:'', font:"Arial, Helvetica, sans-serif"
 };
+let currentUser=null;     // signed-in Google email
+let pendingInline=[];     // {cid, driveId} collected while building send HTML
+const hasServer = (typeof google!=='undefined' && google.script && google.script.run);
 let doc={ name:'Untitled email', blocks:[] };
 let selectedId=null;
 let recipients=[];
@@ -758,7 +808,11 @@ function tog(id,val,label,hint){ return `<div class="toggle"><label>${label}</la
 
 function up(key,val){
   const b=doc.blocks.find(x=>x.id===selectedId); if(!b)return;
-  b.props[key]=val; renderCanvas(); save();
+  b.props[key]=val;
+  // a manually typed URL is no longer the uploaded Drive file
+  const clearMap={src:'driveId',thumb:'thumbDriveId',lImg:'lDriveId',rImg:'rDriveId'};
+  if(clearMap[key]) b.props[clearMap[key]]=undefined;
+  renderCanvas(); save();
 }
 function upNested(side,key,val){
   const b=doc.blocks.find(x=>x.id===selectedId); if(!b)return;
@@ -781,6 +835,7 @@ function renderInspector(){
   const p=b.props; let h='';
   switch(b.type){
     case 'logo':
+      h+=uploadBtn('src','driveId','image/*');
       h+=f('Image URL',inp('src',p.src,'url'));
       h+=f('Width (px)',range('width',p.width,60,300,2,'px'));
       h+=f('Alignment',align('align',p.align));
@@ -823,6 +878,7 @@ function renderInspector(){
       h+=`<div class="hint warn">CSS animation plays in Apple Mail and most modern clients, and is ignored gracefully in Outlook — the button still shows perfectly.</div>`;
       h+=f('Block background',color('blockBg',p.blockBg)); break;
     case 'image':
+      h+=uploadBtn('src','driveId','image/*');
       h+=f('Image URL',inp('src',p.src,'url'));
       h+=f('Alt text',inp('alt',p.alt));
       h+=f('Link URL (optional)',inp('href',p.href,'url','https://'));
@@ -832,6 +888,7 @@ function renderInspector(){
       h+=f('Padding',range('pad',p.pad,0,40,2,'px'));
       h+=f('Background',color('bg',p.bg)); break;
     case 'hero':
+      h+=uploadBtn('src','driveId','image/*',false,'Upload background image');
       h+=f('Background image URL',inp('src',p.src,'url'));
       h+=f('Headline',inp('headline',p.headline));
       h+=f('Sub-text',area('sub',p.sub));
@@ -844,6 +901,7 @@ function renderInspector(){
       h+=`<div class="hint warn">Text-over-image uses an overlay that always renders, but a few older clients ignore background positioning — preview before sending.</div>`;
       break;
     case 'imageButton':
+      h+=uploadBtn('src','driveId','image/*');
       h+=f('Image URL',inp('src',p.src,'url'));
       h+=f('Button label',inp('btnLabel',p.btnLabel));
       h+=f('Button link',inp('btnHref',p.btnHref,'url','https://'));
@@ -854,6 +912,7 @@ function renderInspector(){
       h+=`<div class="hint warn">The button sits over the image where clients allow it; Outlook drops it below the image as a safe fallback.</div>`;
       break;
     case 'gif':
+      h+=uploadBtn('src','driveId','image/gif,image/*',false,'Upload GIF');
       h+=f('GIF URL',inp('src',p.src,'url'));
       h+=f('Alt text',inp('alt',p.alt));
       h+=f('Link URL (optional)',inp('href',p.href,'url','https://'));
@@ -862,7 +921,9 @@ function renderInspector(){
       h+=f('Background',color('bg',p.bg));
       h+=`<div class="hint warn">Outlook 2007–2019 shows only the first frame, so design a strong first frame.</div>`; break;
     case 'video':
+      h+=uploadBtn('','','video/*',true,'Upload video to my Drive');
       h+=f('Thumbnail URL',inp('thumb',p.thumb,'url'));
+      h+=uploadBtn('thumb','thumbDriveId','image/*',false,'Upload custom thumbnail');
       h+=f('Video link (YouTube/Vimeo)',inp('href',p.href,'url','https://'));
       h+=f('Play button colour',color('playColor',p.playColor));
       h+=f('Width (%)',range('width',p.width,30,100,5,'%'));
@@ -871,11 +932,13 @@ function renderInspector(){
       h+=`<div class="hint">Inline video plays only in Apple Mail. Everywhere else this opens the video link — the same approach Salesforce uses.</div>`; break;
     case 'columns':
       h+='<div class="insp-section" style="margin-top:0">Left column</div>';
+      h+=uploadBtn('lImg','lDriveId','image/*');
       h+=f('Image URL',inp('lImg',p.lImg,'url'));
       h+=f('Title',inp('lTitle',p.lTitle));
       h+=f('Text',area('lText',p.lText));
       h+=f('Link (optional)',inp('lHref',p.lHref,'url'));
       h+='<div class="insp-section">Right column</div>';
+      h+=uploadBtn('rImg','rDriveId','image/*');
       h+=f('Image URL',inp('rImg',p.rImg,'url'));
       h+=f('Title',inp('rTitle',p.rTitle));
       h+=f('Text',area('rText',p.rText));
@@ -938,11 +1001,22 @@ function bulletproofButton(label,href,bg,color,radius,padY,padX,fullWidth,anim){
   <!--<![endif]-->`;
 }
 
+let EMAIL_MODE='preview';
+// In 'send' mode, uploaded (Drive) images are embedded inline via CID for reliable rendering.
+function emImg(driveId, url){
+  if(EMAIL_MODE==='send' && driveId){
+    const cid='mc_'+driveId;
+    if(!pendingInline.some(x=>x.cid===cid)) pendingInline.push({cid:cid, driveId:driveId});
+    return 'cid:'+cid;
+  }
+  return url;
+}
+
 function blockToEmail(b){
   const p=b.props; const F=settings.font;
   switch(b.type){
     case 'logo':
-      return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px"><img src="${p.src}" width="${p.width}" alt="logo" style="display:block;border:0;width:${p.width}px;max-width:100%;margin:${p.align==='center'?'0 auto':'0'}"/></td></tr></table>`, p.bg);
+      return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px"><img src="${emImg(p.driveId,p.src)}" width="${p.width}" alt="logo" style="display:block;border:0;width:${p.width}px;max-width:100%;margin:${p.align==='center'?'0 auto':'0'}"/></td></tr></table>`, p.bg);
     case 'spacer':
       return row(`<div style="line-height:${p.height}px;height:${p.height}px;font-size:1px">&nbsp;</div>`, p.bg);
     case 'divider':
@@ -956,14 +1030,14 @@ function blockToEmail(b){
     case 'button':
       return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${padCss(p.pad)}">${bulletproofButton(esc(p.label),p.href,p.bg,p.color,p.radius,p.padY,p.padX,p.fullWidth,p.anim)}</td></tr></table>`, p.blockBg);
     case 'image':{
-      const img=`<img src="${p.src}" alt="${esc(p.alt)}" width="${Math.round(600*p.width/100)}" style="display:block;border:0;width:${p.width}%;max-width:100%;border-radius:${p.radius}px;margin:${p.align==='center'?'0 auto':p.align==='right'?'0 0 0 auto':'0'}"/>`;
+      const img=`<img src="${emImg(p.driveId,p.src)}" alt="${esc(p.alt)}" width="${Math.round(600*p.width/100)}" style="display:block;border:0;width:${p.width}%;max-width:100%;border-radius:${p.radius}px;margin:${p.align==='center'?'0 auto':p.align==='right'?'0 0 0 auto':'0'}"/>`;
       const wrapped=p.href?`<a href="${p.href}" target="_blank">${img}</a>`:img;
       return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px">${wrapped}</td></tr></table>`, p.bg);
     }
     case 'hero':
       // image + caption stacked (most compatible "image+text"): image, then overlay-styled text band
       return row(`<table role="presentation" width="100%">
-        <tr><td style="padding:0"><img src="${p.src}" alt="${esc(p.headline)}" width="600" style="display:block;border:0;width:100%;border-radius:${p.radius}px ${p.radius}px 0 0"/></td></tr>
+        <tr><td style="padding:0"><img src="${emImg(p.driveId,p.src)}" alt="${esc(p.headline)}" width="600" style="display:block;border:0;width:100%;border-radius:${p.radius}px ${p.radius}px 0 0"/></td></tr>
         <tr><td style="background-color:#1B1B2A;padding:22px;text-align:${p.align}">
           <div style="font-family:${F};font-size:24px;font-weight:800;color:#ffffff;line-height:1.25;margin-bottom:8px">${esc(p.headline)}</div>
           <div style="font-family:${F};font-size:14px;color:#d9d9e8;line-height:1.5;margin-bottom:16px">${esc(p.sub)}</div>
@@ -973,26 +1047,26 @@ function blockToEmail(b){
       // image then button beneath — universally safe stack representing "button on image"
       const jv=p.posH;
       return row(`<table role="presentation" width="100%">
-        <tr><td style="padding:0"><img src="${p.src}" alt="${esc(p.btnLabel)}" width="600" style="display:block;border:0;width:100%"/></td></tr>
+        <tr><td style="padding:0"><img src="${emImg(p.driveId,p.src)}" alt="${esc(p.btnLabel)}" width="600" style="display:block;border:0;width:100%"/></td></tr>
         <tr><td align="${jv}" style="padding:16px 20px;background-color:${p.bg}">${bulletproofButton(esc(p.btnLabel),p.btnHref,p.btnBg,p.btnColor,p.radius,12,28,false,'none')}</td></tr>
       </table>`, p.bg);
     }
     case 'gif':{
-      const img=`<img src="${p.src}" alt="${esc(p.alt)}" width="${Math.round(600*p.width/100)}" style="display:block;border:0;width:${p.width}%;max-width:100%;margin:${p.align==='center'?'0 auto':'0'}"/>`;
+      const img=`<img src="${emImg(p.driveId,p.src)}" alt="${esc(p.alt)}" width="${Math.round(600*p.width/100)}" style="display:block;border:0;width:${p.width}%;max-width:100%;margin:${p.align==='center'?'0 auto':'0'}"/>`;
       const wrapped=p.href?`<a href="${p.href}" target="_blank">${img}</a>`:img;
       return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px">${wrapped}</td></tr></table>`, p.bg);
     }
     case 'video':
       return row(`<table role="presentation" width="100%"><tr><td align="${p.align}" style="padding:${p.pad}px">
         <a href="${p.href}" target="_blank" style="display:inline-block;position:relative;text-decoration:none">
-          <img src="${p.thumb}" alt="Play video" width="${Math.round(600*p.width/100)}" style="display:block;border:0;width:${p.width}%;max-width:100%"/>
+          <img src="${emImg(p.thumbDriveId,p.thumb)}" alt="Play video" width="${Math.round(600*p.width/100)}" style="display:block;border:0;width:${p.width}%;max-width:100%"/>
         </a>
         <div style="font-family:${F};font-size:12px;color:#888;margin-top:6px">▶ Watch the video</div>
       </td></tr></table>`, p.bg);
     case 'columns':{
       const colCell=(s)=>`<table role="presentation" width="100%"><tr><td style="padding:8px">
         ${p[s+'Href']?`<a href="${p[s+'Href']}" target="_blank">`:''}
-        <img src="${p[s+'Img']}" width="270" alt="${esc(p[s+'Title'])}" style="display:block;border:0;width:100%;border-radius:6px;margin-bottom:10px"/>
+        <img src="${emImg(p[s+'DriveId'],p[s+'Img'])}" width="270" alt="${esc(p[s+'Title'])}" style="display:block;border:0;width:100%;border-radius:6px;margin-bottom:10px"/>
         ${p[s+'Href']?'</a>':''}
         <div style="font-family:${F};font-size:16px;font-weight:700;color:${p.titleColor};margin-bottom:5px">${esc(p[s+'Title'])}</div>
         <div style="font-family:${F};font-size:13px;line-height:1.5;color:${p.textColor}">${esc(p[s+'Text'])}</div>
@@ -1017,7 +1091,8 @@ function blockToEmail(b){
   return '';
 }
 
-function generateEmailHTML(forSend){
+function generateEmailHTML(mode){
+  EMAIL_MODE = (mode==='send') ? 'send' : 'preview';
   const F=settings.font;
   const pre=document.getElementById('preheader')?.value||'';
   const bodyRows=doc.blocks.map(blockToEmail).join('\n');
@@ -1083,9 +1158,9 @@ function downloadHTML(){
    ============================================================ */
 function openSend(){
   loadSettings();
-  document.getElementById('fromName').value=settings.fromName||'';
+  if(currentUser){ document.getElementById('sendFromEmail').textContent=currentUser; if(!document.getElementById('fromName').value) document.getElementById('fromName').value=''; }
+  const fs=document.getElementById('freqSel'); if(fs){ fs.value='now'; onFreqChange(); }
   document.getElementById('sendOverlay').classList.add('show');
-  document.getElementById('sendConfigNote').style.display=settings.url?'none':'flex';
 }
 function recipKey(e){
   if(e.key==='Enter'||e.key===','){ e.preventDefault(); addRecip(); }
@@ -1102,45 +1177,119 @@ function sendStatus(msg,ok){
   const el=document.getElementById('sendStatus');
   el.textContent=msg; el.className='status-msg show '+(ok?'ok':'err');
 }
-async function postSend(to,subject){
-  const payload={ token:settings.token, to:to.join(','), subject, html:generateEmailHTML(true),
-    fromName:document.getElementById('fromName').value||'', replyTo:document.getElementById('replyTo').value||'' };
-  const res=await fetch(settings.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-  return res.json();
+function buildSendPayload(toArray, subject){
+  pendingInline=[];
+  const html=generateEmailHTML('send');   // 'send' mode populates pendingInline with Drive-hosted images
+  return {
+    to: toArray, subject: subject, html: html,
+    preheader: document.getElementById('preheader').value||'',
+    fromName: document.getElementById('fromName').value||'',
+    replyTo: document.getElementById('replyTo').value||'',
+    inlineImages: pendingInline
+  };
+}
+function serverSend(payload){
+  return new Promise((resolve,reject)=>{
+    if(!hasServer){ reject(new Error('Not deployed')); return; }
+    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).sendCampaign(payload);
+  });
 }
 async function sendEmail(){
   addRecip();
-  if(!settings.url){ sendStatus('Add your Apps Script URL in Settings first.',false); return; }
+  if(!hasServer){ sendStatus('Sending becomes active once this is deployed as an Apps Script web app.',false); return; }
   if(!recipients.length){ sendStatus('Add at least one recipient.',false); return; }
   const subject=document.getElementById('subjectLine').value.trim();
   if(!subject){ sendStatus('Add a subject line.',false); return; }
   const btn=document.getElementById('sendBtn'); btn.textContent='Sending…'; btn.disabled=true;
   try{
-    const r=await postSend(recipients,subject);
-    if(r.ok){ sendStatus('Sent to '+recipients.length+' recipient(s). ✓',true); toast('Email sent'); }
-    else sendStatus('Send failed: '+(r.error||'unknown error'),false);
-  }catch(err){ sendStatus('Network error — check the Web App URL and that it is deployed for "Anyone".',false); }
+    const r=await serverSend(buildSendPayload(recipients,subject));
+    if(r&&r.ok){ sendStatus('Sent to '+r.sent+' recipient(s) from '+r.from+' ✓',true); toast('Email sent'); }
+    else sendStatus('Send failed: '+((r&&r.error)||'unknown error'),false);
+  }catch(err){ sendStatus('Send error: '+(err.message||err),false); }
   btn.textContent='Send now'; btn.disabled=false;
 }
 async function sendTest(){
-  if(!settings.url){ sendStatus('Add your Apps Script URL in Settings first.',false); return; }
-  if(!settings.myEmail){ sendStatus('Add your own email in Settings for test sends.',false); return; }
+  if(!hasServer){ sendStatus('Sending becomes active once this is deployed as an Apps Script web app.',false); return; }
+  const target=currentUser||settings.myEmail;
+  if(!target){ sendStatus('Could not detect your email — reload and re-authorise.',false); return; }
   const subject='[TEST] '+(document.getElementById('subjectLine').value||doc.name);
   try{
-    const r=await postSend([settings.myEmail],subject);
-    if(r.ok){ sendStatus('Test sent to '+settings.myEmail+' ✓',true); toast('Test sent'); }
-    else sendStatus('Test failed: '+(r.error||'unknown'),false);
-  }catch(err){ sendStatus('Network error during test send.',false); }
+    const r=await serverSend(buildSendPayload([target],subject));
+    if(r&&r.ok){ sendStatus('Test sent to '+target+' ✓',true); toast('Test sent'); }
+    else sendStatus('Test failed: '+((r&&r.error)||'unknown'),false);
+  }catch(err){ sendStatus('Test error: '+(err.message||err),false); }
 }
 
 /* ============================================================
-   Settings
+   Recurring / scheduled sends
    ============================================================ */
+function onFreqChange(){
+  const f=document.getElementById('freqSel').value;
+  const c=document.getElementById('schedFields');
+  const hourSel='<select id="schedHour">'+Array.from({length:24},(_,i)=>`<option value="${i}" ${i===9?'selected':''}>${(i<10?'0':'')+i}:00</option>`).join('')+'</select>';
+  const days=[['MON','Monday'],['TUE','Tuesday'],['WED','Wednesday'],['THU','Thursday'],['FRI','Friday'],['SAT','Saturday'],['SUN','Sunday']];
+  let h='';
+  if(f==='once'){ h='<div class="field"><label>Date &amp; time</label><input type="datetime-local" id="schedWhen" /></div>'; }
+  else if(f==='daily'){ h='<div class="field"><label>Every day at</label>'+hourSel+'</div>'; }
+  else if(f==='weekly'){ h='<div class="row2"><div class="field"><label>Weekday</label><select id="schedWeekday">'+days.map(d=>`<option value="${d[0]}">${d[1]}</option>`).join('')+'</select></div><div class="field"><label>At</label>'+hourSel+'</div></div>'; }
+  else if(f==='monthly'){ h='<div class="row2"><div class="field"><label>Day of month</label><input type="number" id="schedDay" min="1" max="28" value="1" /></div><div class="field"><label>At</label>'+hourSel+'</div></div>'; }
+  c.innerHTML=h;
+  document.getElementById('sendBtn').textContent = (f==='now') ? 'Send now' : 'Schedule';
+}
+function buildSchedule(){
+  const f=document.getElementById('freqSel').value;
+  if(f==='once'){
+    const w=document.getElementById('schedWhen').value;
+    if(!w){ sendStatus('Pick a date and time.',false); return null; }
+    if(new Date(w).getTime()<=Date.now()){ sendStatus('Pick a time in the future.',false); return null; }
+    return {type:'once', datetime:new Date(w).toISOString()};
+  }
+  const hour=+(document.getElementById('schedHour')?.value||9);
+  if(f==='daily') return {type:'daily', hour};
+  if(f==='weekly') return {type:'weekly', weekday:document.getElementById('schedWeekday').value, hour};
+  if(f==='monthly') return {type:'monthly', day:+(document.getElementById('schedDay').value||1), hour};
+  return null;
+}
+function onPrimarySend(){
+  const f=document.getElementById('freqSel').value;
+  if(f==='now') sendEmail(); else scheduleEmail();
+}
+async function scheduleEmail(){
+  addRecip();
+  if(!hasServer){ sendStatus('Scheduling becomes active once this is deployed as an Apps Script web app.',false); return; }
+  if(!recipients.length){ sendStatus('Add at least one recipient.',false); return; }
+  const subject=document.getElementById('subjectLine').value.trim();
+  if(!subject){ sendStatus('Add a subject line.',false); return; }
+  const schedule=buildSchedule(); if(!schedule) return;
+  const btn=document.getElementById('sendBtn'); btn.textContent='Scheduling…'; btn.disabled=true;
+  try{
+    const r=await new Promise((res,rej)=>google.script.run.withSuccessHandler(res).withFailureHandler(rej).scheduleCampaign(buildSendPayload(recipients,subject),schedule));
+    if(r&&r.ok){ sendStatus('Scheduled ✓ — '+r.label,true); toast('Email scheduled'); }
+    else sendStatus('Could not schedule: '+((r&&r.error)||'unknown error'),false);
+  }catch(err){ sendStatus('Schedule error: '+(err.message||err),false); }
+  btn.textContent='Schedule'; btn.disabled=false;
+}
+function openScheduled(){
+  document.getElementById('schedOverlay').classList.add('show');
+  const list=document.getElementById('schedList');
+  if(!hasServer){ list.innerHTML='<div style="color:var(--ink-3);font-size:12px;padding:6px 2px">Available once deployed to Apps Script.</div>'; return; }
+  list.innerHTML='<div style="color:var(--ink-3);font-size:12px;padding:6px 2px"><span class="mc-spin" style="border-top-color:var(--accent);border-color:var(--accent-soft);border-top-color:var(--accent)"></span> Loading…</div>';
+  google.script.run.withSuccessHandler(renderScheduled).withFailureHandler(()=>{ list.innerHTML='<div style="color:var(--danger);font-size:12px">Could not load scheduled sends.</div>'; }).listScheduled();
+}
+function renderScheduled(items){
+  const list=document.getElementById('schedList');
+  if(!items||!items.length){ list.innerHTML='<div style="color:var(--ink-3);font-size:12px;padding:6px 2px">No scheduled sends yet. Use <b>Send → Delivery</b> to schedule one.</div>'; return; }
+  list.innerHTML=items.map(it=>`<div class="tpl-item">
+    <div class="tpl-meta"><b>${esc(it.subject||'(no subject)')}</b><small>${esc(it.label)} · ${it.recipients} recipient(s)${it.lastRun?' · last sent '+new Date(it.lastRun).toLocaleDateString():''}</small></div>
+    <button class="btn-icon" title="Cancel" onclick="cancelSched('${it.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+  </div>`).join('');
+}
+function cancelSched(id){
+  google.script.run.withSuccessHandler(()=>{ toast('Schedule cancelled'); openScheduled(); }).withFailureHandler(()=>toast('Could not cancel')).cancelScheduled(id);
+}
 function openSettings(){
   loadSettings();
-  document.getElementById('setUrl').value=settings.url;
-  document.getElementById('setToken').value=settings.token;
-  document.getElementById('setMyEmail').value=settings.myEmail;
+  document.getElementById('setMyEmail').value=currentUser||settings.myEmail||'';
   document.getElementById('setBrandColor').value=settings.brandColor;
   document.getElementById('setBrandColorHex').value=settings.brandColor;
   document.getElementById('setBtnRadius').value=settings.btnRadius;
@@ -1153,9 +1302,6 @@ document.addEventListener('input',e=>{
   if(e.target.id==='setBrandColorHex') document.getElementById('setBrandColor').value=e.target.value;
 });
 function saveSettings(){
-  settings.url=document.getElementById('setUrl').value.trim();
-  settings.token=document.getElementById('setToken').value.trim();
-  settings.myEmail=document.getElementById('setMyEmail').value.trim();
   settings.brandColor=document.getElementById('setBrandColorHex').value.trim()||'#5B5BD6';
   settings.btnRadius=+document.getElementById('setBtnRadius').value||8;
   settings.logo=document.getElementById('setLogo').value.trim();
@@ -1166,6 +1312,82 @@ function saveSettings(){
 function loadSettings(){
   try{ const s=JSON.parse(localStorage.getItem(SET_KEY)); if(s) settings={...settings,...s}; }catch(e){}
 }
+
+/* ============================================================
+   Media upload → user's own Google Drive
+   ============================================================ */
+let _uploadTarget=null;
+function uploadBtn(srcKey,driveIdKey,accept,isVideo,label){
+  return `<button class="upload-btn" onclick="pickMedia('${srcKey}','${driveIdKey||''}','${accept}',${isVideo?'true':'false'})">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+    ${label||'Upload from device'}</button>`;
+}
+function pickMedia(srcKey,driveIdKey,accept,isVideo){
+  if(!hasServer){ toast('Uploads activate once deployed to Apps Script'); return; }
+  _uploadTarget={srcKey,driveIdKey,isVideo};
+  const inp=document.getElementById('mediaFile'); inp.accept=accept; inp.click();
+}
+function onMediaPicked(e){
+  const file=e.target.files[0]; e.target.value=''; if(!file) return;
+  const isVideo=_uploadTarget.isVideo;
+  const max=isVideo?25*1024*1024:10*1024*1024;
+  if(file.size>max){ toast(isVideo?'Video over 25MB — paste a video link instead.':'Image over 10MB — please use a smaller file.'); return; }
+  document.querySelectorAll('.upload-btn').forEach(b=>b.classList.add('busy'));
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const base64=reader.result.split(',')[1];
+    google.script.run.withSuccessHandler(res=>{
+      const b=doc.blocks.find(x=>x.id===selectedId);
+      if(b){
+        if(isVideo){ b.props.href=res.viewUrl; b.props.thumb=res.thumbUrl; b.props.thumbDriveId=undefined; }
+        else { b.props[_uploadTarget.srcKey]=res.url; if(_uploadTarget.driveIdKey) b.props[_uploadTarget.driveIdKey]=res.id; }
+      }
+      document.querySelectorAll('.upload-btn').forEach(x=>x.classList.remove('busy'));
+      renderCanvas(); renderInspector(); save(); toast('Uploaded to your Drive');
+    }).withFailureHandler(err=>{
+      document.querySelectorAll('.upload-btn').forEach(x=>x.classList.remove('busy'));
+      toast('Upload failed: '+(err.message||err));
+    }).uploadMedia({data:base64,name:file.name,mimeType:file.type});
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ============================================================
+   Sign-in / profile
+   ============================================================ */
+function initAuth(){
+  let revealed=false;
+  const startBtn='<button class="btn btn-primary" style="font-size:14px;padding:12px 24px" onclick="enterStudio()">Start designing</button>';
+  function reveal(html){ if(revealed) return; revealed=true; const a=document.getElementById('landingAuth'); if(a) a.innerHTML=html; }
+
+  if(!hasServer){
+    reveal('<button class="btn btn-primary" style="font-size:14px;padding:11px 22px" onclick="enterStudio()">Open the designer (preview mode)</button>'+
+      '<div style="font-size:11px;color:#9a9ac0;margin-top:14px">Deploy to Apps Script to enable Google sign-in, sending and uploads.</div>');
+    return;
+  }
+
+  // Failsafe: never leave the user stuck on the spinner.
+  const timer=setTimeout(()=>reveal(startBtn), 6000);
+
+  try{
+    google.script.run.withSuccessHandler(p=>{
+      clearTimeout(timer);
+      currentUser=(p&&p.email)||'';
+      if(currentUser){
+        const initial=currentUser[0].toUpperCase();
+        const ava=document.getElementById('userAva'); if(ava) ava.textContent=initial;
+        const ue=document.getElementById('userEmail'); if(ue) ue.textContent=currentUser;
+        const chip=document.getElementById('userChip'); if(chip) chip.style.display='flex';
+        reveal(`<button class="btn btn-primary" style="font-size:14px;padding:12px 24px" onclick="enterStudio()">
+          <span class="ava" style="width:22px;height:22px;border-radius:50%;background:#fff;color:#5B5BD6;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-right:8px">${initial}</span>
+          Continue as ${currentUser}</button>`);
+      } else {
+        reveal(startBtn);
+      }
+    }).withFailureHandler(()=>{ clearTimeout(timer); reveal(startBtn); }).getProfile();
+  }catch(e){ clearTimeout(timer); reveal(startBtn); }
+}
+function enterStudio(){ const l=document.getElementById('landing'); if(l) l.style.display='none'; }
 
 /* ============================================================
    Persistence + templates
@@ -1222,18 +1444,16 @@ function toast(msg){ const t=document.getElementById('toast'); document.getEleme
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('show'); }));
 document.getElementById('docName').addEventListener('input',save);
 
-/* init */
-loadSettings(); load(); renderLibrary(); renderCanvas(); renderInspector();
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989173811138340"
-     crossorigin="anonymous"></script>
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-format="autorelaxed"
-     data-ad-client="ca-pub-2989173811138340"
-     data-ad-slot="2610556316"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+/* init — guarded so the sign-in gate always resolves */
+function boot(){
+  try{ loadSettings(); }catch(e){}
+  try{ load(); }catch(e){}
+  try{ renderLibrary(); }catch(e){}
+  try{ renderCanvas(); }catch(e){}
+  try{ renderInspector(); }catch(e){}
+  try{ initAuth(); }catch(e){ const l=document.getElementById('landing'); if(l) l.style.display='none'; }
+}
+if(document.readyState==='loading') window.addEventListener('DOMContentLoaded',boot); else boot();
 </script>
 </body>
 </html>
