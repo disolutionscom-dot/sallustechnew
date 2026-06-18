@@ -473,10 +473,14 @@ input,select,textarea{font-family:inherit;color:inherit;font-size:13px}
       <button class="modal-close" onclick="closeModal('templatesOverlay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="modal-body">
-      <div style="display:flex;gap:8px;margin-bottom:16px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
         <input type="text" id="tplName" placeholder="Save current design as…" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 11px" />
         <button class="btn btn-primary" onclick="saveTemplate()">Save</button>
       </div>
+      <button class="btn btn-soft" id="saveGmailBtn" style="width:100%;justify-content:center;margin-bottom:16px;display:none" onclick="saveToGmailAddon()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M4 4h16v16H4z"/><path d="m4 7 8 6 8-6"/></svg>
+        Save to my Gmail add-on templates
+      </button>
       <div class="insp-section" style="margin-top:0">Saved designs</div>
       <div class="tpl-list" id="tplList"></div>
       <div class="insp-section">Starter layouts</div>
@@ -1495,6 +1499,7 @@ function load(){
 }
 function getTemplates(){ try{ return JSON.parse(localStorage.getItem(TPL_KEY))||[]; }catch(e){ return []; } }
 function openTemplates(){
+  const sg=document.getElementById('saveGmailBtn'); if(sg) sg.style.display=hasServer?'flex':'none';
   const list=getTemplates();
   document.getElementById('tplList').innerHTML=list.length?list.map((t,i)=>
     `<div class="tpl-item"><div class="tpl-meta"><b>${esc(t.name)}</b><small>${t.blocks.length} blocks · ${new Date(t.ts).toLocaleDateString()}</small></div>
@@ -1508,6 +1513,16 @@ function saveTemplate(){
   const list=getTemplates(); list.unshift({name,ts:Date.now(),blocks:JSON.parse(JSON.stringify(doc.blocks))});
   localStorage.setItem(TPL_KEY,JSON.stringify(list)); document.getElementById('tplName').value='';
   openTemplates(); toast('Template saved');
+}
+function saveToGmailAddon(){
+  if(!hasServer){ toast('Open from the Gmail add-on to save here'); return; }
+  if(!doc.blocks.length){ toast('Design something first'); return; }
+  const name=document.getElementById('tplName').value.trim()||doc.name||'Untitled template';
+  const html=generateEmailBody('preview');  // public image URLs — renders when inserted into Gmail
+  const btn=document.getElementById('saveGmailBtn'); const old=btn.textContent; btn.textContent='Saving…';
+  google.script.run.withSuccessHandler(r=>{ btn.textContent=old; if(r&&r.ok){ toast('Saved to your Gmail templates ✓'); document.getElementById('tplName').value=''; } else toast('Save failed'); })
+    .withFailureHandler(()=>{ btn.textContent=old; toast('Save failed'); })
+    .saveTemplate(name, html);
 }
 function loadTemplate(i){ const t=getTemplates()[i]; doc.blocks=JSON.parse(JSON.stringify(t.blocks)); doc.name=t.name; document.getElementById('docName').value=t.name; selectedId=null; renderCanvas(); renderInspector(); save(); closeModal('templatesOverlay'); toast('Template loaded'); }
 function delTemplate(i){ const list=getTemplates(); list.splice(i,1); localStorage.setItem(TPL_KEY,JSON.stringify(list)); openTemplates(); }
