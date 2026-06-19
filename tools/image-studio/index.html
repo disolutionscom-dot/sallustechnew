@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989173811138340"
-     crossorigin="anonymous"></script>
-<!-- mail craft -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-2989173811138340"
-     data-ad-slot="6949298132"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SallusTech Image Studio — Background remover & image tools</title>
@@ -487,7 +475,16 @@
 <input type="file" id="fileInput" accept="image/*" hidden />
 
 <script type="module">
-import { removeBackground } from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm';
+import { removeBackground } from 'https://esm.sh/@imgly/background-removal@1.5.5';
+
+/* ----------------------------------------------------------------
+   OPTIONAL BACKEND for background removal.
+   Leave empty ("") to run the AI fully in the browser.
+   To use a server instead (most reliable), set this to your endpoint
+   that accepts a POSTed image and returns a transparent PNG.
+   A ready-to-deploy rembg service is described in BG-REMOVER-FIX.md.
+---------------------------------------------------------------- */
+const BG_BACKEND_URL = "";
 
 /* ============================================================
    SallusTech Image Studio
@@ -511,12 +508,14 @@ const I = {
   meme:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 16h6" stroke-width="2.2"/></svg>',
   filters:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="6" opacity=".6"/><circle cx="15" cy="15" r="6"/></svg>',
   blur:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity=".5"/><circle cx="12" cy="12" r="10" opacity=".25"/></svg>',
-  grayscale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/></svg>'
+  grayscale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"/></svg>',
+  eraser:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l9-9"/><path d="M14.5 6.5 17 4l3 3-2.5 2.5z"/><path d="M9 4v2M4 9h2M19 14v2M16 18h2"/></svg>'
 };
 
 /* ---------- TOOL REGISTRY ---------- */
 const TOOLS = [
   { id:'removebg', name:'Remove background', tagline:'AI cut-out, transparent PNG', cat:'AI', accent:'var(--coral)', icon:I.removebg, badge:'AI', interactive:false, transparentOut:true },
+  { id:'eraser', name:'Smart eraser', tagline:'Click the background — instant, no AI', cat:'AI', accent:'var(--sky)', icon:I.eraser, badge:'Instant', interactive:'eraser', transparentOut:true },
   { id:'compress', name:'Compress image', tagline:'Shrink file size, keep quality', cat:'Optimize', accent:'var(--teal)', icon:I.compress },
   { id:'resize', name:'Resize image', tagline:'Set pixels or scale by percent', cat:'Optimize', accent:'var(--sky)', icon:I.resize },
   { id:'convert', name:'Convert format', tagline:'JPG · PNG · WebP', cat:'Optimize', accent:'var(--violet)', icon:I.convert },
@@ -676,7 +675,8 @@ function buildToolUI(){
   $('#wsStageLabel').textContent = `${state.img.naturalWidth} × ${state.img.naturalHeight}px · ${fmtBytes(state.file.size)}`;
   $('#wsPanelSub').textContent = 'Adjust settings, then run.';
 
-  if(t.interactive){ renderInteractiveStage(); }
+  if(t.interactive==='eraser'){ renderEraserStage(); }
+  else if(t.interactive){ renderInteractiveStage(); }
   else { renderPreview(state.imgURL, t.transparentOut); }
 
   renderControls();
@@ -716,6 +716,21 @@ function renderControls(){
     case 'removebg':
       add(`<label>AI background removal</label><p class="hint" style="margin:0">First run downloads a one-time AI model (~40 MB) into your browser cache. After that it's instant and offline. The subject is detected automatically — no settings needed.</p>`);
       o.format='image/png';
+      break;
+
+    case 'eraser':
+      o.tolerance=32; o.mode='wand'; o.brush=36; o.feather=true;
+      add(`<label>How it works</label><p class="hint" style="margin:0">We already tried an automatic cut based on the corners of your photo. Click anywhere on the background to remove more, or use the brush modes to refine — no model to download, works instantly offline. Best for solid or plain backgrounds. For soft edges like hair or fur, the AI <b>Remove background</b> tool will look better.</p>`);
+      chips('mode','Mode',[{t:'Magic wand',v:'wand'},{t:'Brush erase',v:'brush'},{t:'Brush restore',v:'restore'}],'wand');
+      range('tolerance','Wand tolerance',2,100,32,1,'%');
+      range('brush','Brush size',8,120,36,1,'px');
+      add(`<label class="toggle" style="display:flex;align-items:center;gap:9px;font-weight:500;color:var(--ink-2);font-size:13.5px;cursor:pointer"><input type="checkbox" id="eraseFeather" checked style="width:auto"> Smooth edges on download</label>`);
+      $('#eraseFeather').addEventListener('change',e=>{o.feather=e.target.checked;});
+      add(`<div class="field"><button class="btn-soft" id="eraseAuto" style="width:100%">↺ Re-run auto-detect</button></div>`);
+      $('#eraseAuto').addEventListener('click',()=>{eraserReset(true);autoDetectBackground();toast('Re-ran automatic background detection.');});
+      add(`<div class="field"><div class="row" style="gap:8px"><button class="btn-soft" id="eraseUndo" style="flex:1">Undo</button><button class="btn-soft" id="eraseReset" style="flex:1">Reset image</button></div></div>`);
+      $('#eraseUndo').addEventListener('click',eraserUndo);
+      $('#eraseReset').addEventListener('click',()=>eraserReset());
       break;
 
     case 'compress':
@@ -847,7 +862,7 @@ function livePreviewRotate(){
 /* ---------- FOOTER buttons ---------- */
 function renderFoot(){
   const foot=$('#wsFoot'); foot.innerHTML='';
-  const runLabels={removebg:'Remove background',compress:'Compress now',resize:'Resize image',convert:'Convert',upscale:'Enlarge',rotate:'Apply',filters:'Apply filter',watermark:'Add watermark',meme:'Generate',crop:'Crop image',blur:'Apply blur'};
+  const runLabels={removebg:'Remove background',eraser:'Apply erase',compress:'Compress now',resize:'Resize image',convert:'Convert',upscale:'Enlarge',rotate:'Apply',filters:'Apply filter',watermark:'Add watermark',meme:'Generate',crop:'Crop image',blur:'Apply blur'};
   const run=document.createElement('button');
   run.className='btn-primary btn-block'; run.id='runBtn';
   run.innerHTML=`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 3l14 9-14 9z"/></svg> ${runLabels[state.toolId]||'Process'}`;
@@ -927,6 +942,118 @@ function enableDrag(sel){
   sel.addEventListener('mousedown',onDown);sel.addEventListener('touchstart',onDown,{passive:false});
 }
 
+/* ---------- SMART ERASER (no-AI, click/brush) ---------- */
+let eraserState=null, eraserListenersBound=false;
+function renderEraserStage(){
+  const sc=$('#wsStageContent');
+  sc.innerHTML=`<div class="stage-canvas show-checker" id="stageCanvas" style="cursor:crosshair"><canvas id="eraseCanvas"></canvas></div>`;
+  const cv=$('#eraseCanvas');
+  const maxDim=1280;
+  const scale=Math.min(1,maxDim/Math.max(state.img.naturalWidth,state.img.naturalHeight));
+  cv.width=Math.max(1,Math.round(state.img.naturalWidth*scale));
+  cv.height=Math.max(1,Math.round(state.img.naturalHeight*scale));
+  cv.style.maxWidth='100%';cv.style.maxHeight='520px';cv.style.borderRadius='8px';cv.style.boxShadow='0 6px 22px rgba(14,21,37,.12)';cv.style.touchAction='none';
+  const ctx=cv.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(state.img,0,0,cv.width,cv.height);
+  const pristineCanvas=document.createElement('canvas');pristineCanvas.width=cv.width;pristineCanvas.height=cv.height;
+  pristineCanvas.getContext('2d').drawImage(state.img,0,0,cv.width,cv.height);
+  eraserState={cv,ctx,pristineCanvas,history:[]};
+  autoDetectBackground();
+  ensureEraserListeners();
+}
+function autoDetectBackground(){
+  if(!eraserState)return;
+  const {ctx,cv}=eraserState;const tol=(state.options&&state.options.tolerance)??32;
+  const w=cv.width,h=cv.height;
+  [[1,1],[w-2,1],[1,h-2],[w-2,h-2]].forEach(([x,y])=>floodErase(ctx,w,h,x,y,tol));
+  eraserState.history=[];pushEraseHistory();
+}
+function canvasPoint(cv,e){
+  const r=cv.getBoundingClientRect();
+  return {x:(e.clientX-r.left)*(cv.width/r.width), y:(e.clientY-r.top)*(cv.height/r.height)};
+}
+function pushEraseHistory(){
+  if(!eraserState)return;
+  const snap=eraserState.ctx.getImageData(0,0,eraserState.cv.width,eraserState.cv.height);
+  eraserState.history.push(snap);
+  if(eraserState.history.length>6)eraserState.history.shift();
+}
+function eraserUndo(){
+  if(!eraserState||eraserState.history.length<2){toast('Nothing to undo.',true);return;}
+  eraserState.history.pop();
+  const prev=eraserState.history[eraserState.history.length-1];
+  eraserState.ctx.putImageData(prev,0,0);
+}
+function eraserReset(silent){
+  if(!eraserState)return;
+  eraserState.ctx.clearRect(0,0,eraserState.cv.width,eraserState.cv.height);
+  eraserState.ctx.drawImage(eraserState.pristineCanvas,0,0);
+  eraserState.history=[];pushEraseHistory();
+  if(!silent)toast('Image reset.');
+}
+function floodErase(ctx,w,h,startX,startY,tolerancePct){
+  if(startX<0||startY<0||startX>=w||startY>=h)return;
+  const img=ctx.getImageData(0,0,w,h);const data=img.data;
+  const idx=(x,y)=>(y*w+x)*4;
+  const si=idx(startX,startY);
+  if(data[si+3]===0)return;
+  const r0=data[si],g0=data[si+1],b0=data[si+2];
+  const thresh=tolerancePct/100*441; // max possible RGB distance ~441
+  const visited=new Uint8Array(w*h);
+  const stack=[startX,startY];
+  while(stack.length){
+    const y=stack.pop(),x=stack.pop();
+    if(x<0||x>=w||y<0||y>=h)continue;
+    const vi=y*w+x;if(visited[vi])continue;visited[vi]=1;
+    const i=idx(x,y);
+    if(data[i+3]===0)continue;
+    const dr=data[i]-r0,dg=data[i+1]-g0,db=data[i+2]-b0;
+    if(Math.sqrt(dr*dr+dg*dg+db*db)<=thresh){
+      data[i+3]=0;
+      stack.push(x+1,y,x-1,y,x,y+1,x,y-1);
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+function brushAt(x,y,radius,mode){
+  const {ctx,pristineCanvas}=eraserState;
+  if(mode==='restore'){
+    ctx.save();ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.clip();
+    ctx.clearRect(x-radius,y-radius,radius*2,radius*2);
+    ctx.drawImage(pristineCanvas,x-radius,y-radius,radius*2,radius*2,x-radius,y-radius,radius*2,radius*2);
+    ctx.restore();
+  }else{
+    ctx.save();ctx.globalCompositeOperation='destination-out';
+    const g=ctx.createRadialGradient(x,y,0,x,y,radius);
+    g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+}
+function ensureEraserListeners(){
+  if(eraserListenersBound)return;eraserListenersBound=true;
+  let dragging=false;
+  const handleStart=(clientX,clientY,target)=>{
+    if(!eraserState||target!==eraserState.cv)return false;
+    const o=state.options||{};const p=canvasPoint(eraserState.cv,{clientX,clientY});
+    if(o.mode==='wand'){floodErase(eraserState.ctx,eraserState.cv.width,eraserState.cv.height,Math.round(p.x),Math.round(p.y),o.tolerance??32);pushEraseHistory();}
+    else{dragging=true;brushAt(p.x,p.y,(o.brush??36)/2,o.mode);}
+    return true;
+  };
+  const handleMove=(clientX,clientY)=>{
+    if(!dragging||!eraserState)return;
+    const o=state.options||{};const p=canvasPoint(eraserState.cv,{clientX,clientY});
+    brushAt(p.x,p.y,(o.brush??36)/2,o.mode);
+  };
+  const handleEnd=()=>{if(dragging){dragging=false;pushEraseHistory();}};
+  document.addEventListener('mousedown',e=>handleStart(e.clientX,e.clientY,e.target));
+  document.addEventListener('mousemove',e=>handleMove(e.clientX,e.clientY));
+  document.addEventListener('mouseup',handleEnd);
+  document.addEventListener('touchstart',e=>{const t=e.touches[0];if(handleStart(t.clientX,t.clientY,e.target))e.preventDefault();},{passive:false});
+  document.addEventListener('touchmove',e=>{if(dragging){e.preventDefault();const t=e.touches[0];handleMove(t.clientX,t.clientY);}},{passive:false});
+  document.addEventListener('touchend',handleEnd);
+}
+
 /* ============================================================
    PROCESSING
    ============================================================ */
@@ -949,6 +1076,7 @@ async function runTool(){
     let blob, type='image/png';
     switch(state.toolId){
       case 'removebg': blob=await doRemoveBg(); type='image/png'; break;
+      case 'eraser': blob=await doEraser(); type='image/png'; break;
       case 'compress': ({blob,type}=await doCanvas((c,ctx)=>{},state.options.format,state.options.quality/100)); break;
       case 'resize': ({blob,type}=await doResize()); break;
       case 'convert': ({blob,type}=await doConvert()); break;
@@ -970,14 +1098,24 @@ async function runTool(){
 
 /* -- remove background (AI) -- */
 async function doRemoveBg(){
-  showProc('Preparing AI model…','This is a one-time download',true);
+  // Server-side path (most reliable) — used only if you set BG_BACKEND_URL.
+  if(BG_BACKEND_URL){
+    showProc('Removing background…','Processing on your server',false);
+    const fd=new FormData(); fd.append('image',state.file,state.file.name||'image.png');
+    const r=await fetch(BG_BACKEND_URL,{method:'POST',body:fd});
+    if(!r.ok) throw new Error('Background service returned an error ('+r.status+').');
+    const blob=await r.blob(); hideProc(); return blob;
+  }
+  // Client-side AI path. JS is bundled by esm.sh; WASM + ONNX model
+  // assets are fetched from the jsdelivr CDN dist folder via publicPath.
+  showProc('Preparing AI model…','First run downloads a one-time model (~40 MB)',true);
   const blob = await removeBackground(state.file,{
     publicPath:'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/dist/',
     output:{format:'image/png'},
     progress:(key,cur,total)=>{
       const pct = total? Math.round(cur/total*100) : 0;
-      if(key.startsWith('fetch')) setProc('Downloading AI model…',`${pct}% · cached after first use`,pct);
-      else if(key.startsWith('compute')||key.startsWith('inference')) setProc('Removing background…','Running locally on your device',pct);
+      if(/fetch/i.test(key)) setProc('Downloading AI model…',`${pct}% · cached after first use`,pct);
+      else if(/compute|inference|process/i.test(key)) setProc('Removing background…','Running locally on your device',pct);
       else setProc('Working…',null,pct);
     }
   });
@@ -1100,6 +1238,43 @@ async function doBlur(){
   const blob=await blobOf(c,type,.92);return {blob,type};
 }
 
+async function doEraser(){
+  if(!eraserState)throw new Error('Nothing to erase yet — click the background first.');
+  showProc('Finishing…','Applying your edits at full resolution',false);
+  const full=srcCanvas();const fctx=full.getContext('2d');
+  const maskUp=document.createElement('canvas');maskUp.width=full.width;maskUp.height=full.height;
+  maskUp.getContext('2d').drawImage(eraserState.cv,0,0,maskUp.width,maskUp.height);
+  fctx.globalCompositeOperation='destination-in';
+  fctx.drawImage(maskUp,0,0);
+  fctx.globalCompositeOperation='source-over';
+  if(state.options.feather!==false) featherAlpha(fctx,full.width,full.height);
+  const blob=await blobOf(full,'image/png');
+  hideProc();
+  return blob;
+}
+function featherAlpha(ctx,w,h){
+  // one soft 3x3 box blur on the alpha channel only — smooths jagged cutout edges
+  const img=ctx.getImageData(0,0,w,h);const data=img.data;
+  const alpha=new Uint8ClampedArray(w*h);
+  for(let i=0;i<w*h;i++)alpha[i]=data[i*4+3];
+  const out=new Uint8ClampedArray(w*h);
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      let sum=0,cnt=0;
+      for(let dy=-1;dy<=1;dy++){
+        const yy=y+dy;if(yy<0||yy>=h)continue;
+        for(let dx=-1;dx<=1;dx++){
+          const xx=x+dx;if(xx<0||xx>=w)continue;
+          sum+=alpha[yy*w+xx];cnt++;
+        }
+      }
+      out[y*w+x]=Math.round(sum/cnt);
+    }
+  }
+  for(let i=0;i<w*h;i++)data[i*4+3]=out[i];
+  ctx.putImageData(img,0,0);
+}
+
 /* ---------- RESULT ---------- */
 function finishResult(blob,type){
   if(state.resultURL)URL.revokeObjectURL(state.resultURL);
@@ -1168,18 +1343,6 @@ function downloadResult(){
 
 /* keyboard: Esc returns to tools */
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && $('#viewTool').classList.contains('active')) goHome(); });
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2989173811138340"
-     crossorigin="anonymous"></script>
-<!-- mail craft -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-2989173811138340"
-     data-ad-slot="6949298132"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
 </script>
 </body>
 </html>
